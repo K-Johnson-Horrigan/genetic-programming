@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 from matplotlib import pyplot as plt
 import sympy as sp
@@ -6,6 +8,7 @@ import sympy as sp
 
 def plot_min(all_pops, all_fits, labels, title, label_title, **kwargs):
     """Display the history"""
+
     fig, ax = plt.subplots()
     x = np.array(range(all_fits.shape[2]))
 
@@ -85,6 +88,7 @@ def plot_best(all_pops, all_fits, run=None, gen=slice(None), **kwargs):
     else:
         runs = run
     nodes = []
+
     # Iterate over all runs
     for run in runs:
         i = all_fits[run,slice(None),gen,:].argmin()
@@ -101,24 +105,31 @@ def plot_sims(all_pops, all_fits, **kwargs):
     """Create all plots"""
     # Display the current histories
     plot_min(all_pops, all_fits, title='', **kwargs)
-    # plot_best(all_pops, all_fits, title='Best Overall', **kwargs)
+    plot_best(all_pops, all_fits, title='Best Overall', **kwargs)
     # plot_size(all_pops, all_fits, title='Best Overall', **kwargs)
 
 
-def save_all(all_fits, all_pops, kwargs):
-    np.save('saves/fits', all_fits)
-    np.save('saves/pops', all_pops)
-    np.save('saves/kwargs', np.array([kwargs]))
+def save_all(all_pops, all_fits, kwargs):
+    path = 'saves/' + kwargs['name'] + '/'
+    os.makedirs(path, exist_ok=True)
+    np.save(path + 'pops', all_pops)
+    np.save(path + 'fits', all_fits)
+    np.save(path + 'kwargs', np.array([kwargs]))
 
 
-def load_all():
-    all_fits = np.load('saves/fits.npy')
-    all_pops = np.load('saves/pops.npy', allow_pickle=True)
-    kwargs = np.load('saves/kwargs.npy', allow_pickle=True)[0]
-    return all_fits, all_pops, kwargs
+def load_all(name):
+    path = 'saves/' + name + '/'
+    all_pops = np.load(path + 'pops.npy', allow_pickle=True)
+    all_fits = np.load(path + 'fits.npy')
+    # kwargs = np.load(path + 'kwargs.npy', allow_pickle=True)[0]
+    kwargs = None
+    return all_pops, all_fits, kwargs
 
 
 if __name__ == '__main__':
-    all_fits, all_pops, kwargs = load_all()
+    name = 'mod2'
+    import gp
+    all_pops, all_fits, kwargs = load_all(name)
+    kwargs = gp.kwargs
     print('Loaded Data')
     plot_sims(all_pops, all_fits, **kwargs)
