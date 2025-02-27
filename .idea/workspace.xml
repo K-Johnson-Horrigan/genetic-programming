@@ -9,17 +9,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1be11103-b19a-4186-ab16-0c56b5278741" name="Changes" comment="Separated GP and non-GP">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/basic.py" beforeDir="false" afterPath="$PROJECT_DIR$/basic.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/evolve.py" beforeDir="false" afterPath="$PROJECT_DIR$/evolve.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gp.py" beforeDir="false" afterPath="$PROJECT_DIR$/gp.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/node.py" beforeDir="false" afterPath="$PROJECT_DIR$/node.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/saves/fits.npy" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saves/kwargs.npy" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/saves/pops.npy" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/fits.npy" beforeDir="false" afterPath="$PROJECT_DIR$/saves/fits.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/kwargs.npy" beforeDir="false" afterPath="$PROJECT_DIR$/saves/kwargs.npy" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/saves/pops.npy" beforeDir="false" afterPath="$PROJECT_DIR$/saves/pops.npy" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,20 +51,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python.basic.executor&quot;: &quot;Run&quot;,
-    &quot;Python.evolve.executor&quot;: &quot;Run&quot;,
-    &quot;Python.gp.executor&quot;: &quot;Run&quot;,
-    &quot;Python.main.executor&quot;: &quot;Debug&quot;,
-    &quot;Python.node.executor&quot;: &quot;Run&quot;,
-    &quot;Python.utils.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Admin/OneDrive - Michigan State University/CSE 851/general-purpose-optimization-library-master&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;aDefault&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.basic.executor": "Run",
+    "Python.evolve.executor": "Run",
+    "Python.gp.executor": "Run",
+    "Python.main.executor": "Debug",
+    "Python.node.executor": "Run",
+    "Python.utils.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "D:/Mount Union Files/OneDrive/Internships/UNR/Code",
+    "run.code.analysis.last.selected.profile": "aDefault"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -105,6 +99,16 @@
           <url>file://$PROJECT_DIR$/utils.py</url>
           <line>46</line>
           <option name="timeStamp" value="7" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/node.py</url>
+          <line>320</line>
+          <option name="timeStamp" value="9" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/node.py</url>
+          <line>356</line>
+          <option name="timeStamp" value="13" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

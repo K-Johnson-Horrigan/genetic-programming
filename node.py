@@ -4,6 +4,10 @@ import sympy as sp
 import random
 import math
 from math import sin
+import networkx as nx
+from matplotlib import patheffects
+
+
 
 from utils import plot_nodes
 
@@ -40,13 +44,15 @@ class Node:
 
     def __init__(self, value, children=None):
         self.parent = None
+        self.parents = []
         # Cast int to a Node containing only valid terminals
         # if type(value) == int:
         #     value = Node.const(value)
         # If the value is already a node use its value so that Nodes can be cast to a Node
         # This also allows for copies of a Node to be made through casting
         if type(value) == Node:
-            self.children = value.copy().children
+            # self.children = value.copy().children
+            self.children = value.children
             self.value = value.value
         else:
             self.value = value
@@ -85,6 +91,9 @@ class Node:
 
     def depth(self):
         return max([0] + [1 + child.depth() for child in self.children])
+
+    def node_depth(self):
+        return 0 if self.parent is None else self.parent.node_depth() + 1
 
     def root(self):
         """Returns the root or parent of the tree"""
@@ -205,8 +214,8 @@ class Node:
         for i in range(len(operands)):
             if type(operands[i]) != Node:
                 operands[i] = Node(operands[i])
-            else:
-                operands[i] = operands[i].copy()
+            # else:
+                # operands[i] = operands[i].copy()
         # Return a new Node with the operands as the children
         return Node(operation, operands)
 
@@ -263,33 +272,6 @@ class Node:
     # Non-simplified
     #
 
-    """
-    Press % |
-    Roll @
-    Grind *
-    Cut !
-    Heat ^
-    Cool * ~
-    
-    Wire ~
-    Rod |
-    Brace ^
-    Cast # @
-    
-    | ( L V |
-    
-    | ( C O
-    
-    - u v |
-        o
-    
-    ingot % plate
-    
-    
-    
-    """
-
-
     # def  __and__(self, other): return Node.op('&',  self, other)
     # def __rand__(self, other): return Node.op('&',  other, self)
     # def   __or__(self, other): return Node.op('|',  self, other)
@@ -304,6 +286,115 @@ class Node:
     # @staticmethod
     # def if_then_else(cond, if_true, if_false=None):
     #     return Node.op('if_then_else', cond, if_true, if_false)
+
+
+    def disp(self, x0=0, x1=1, y=0, initial=True, verts=None, edges=None, pos=None):
+
+        edges = [] if edges is None else edges
+        verts = [self] if verts is None else verts
+        pos = [(0,0)] if pos is None else pos
+        index = [index for index,n in enumerate(verts) if n is self][0]
+
+        x = x0 + 0.5 * (x1 - x0)
+
+        xx = math.cos(math.pi * 2 * x) * y
+        yy = math.sin(math.pi * 2 * x) * y
+
+
+        if len(self) > 0:
+            sub_y = y + 1
+            for i, child in enumerate(self):
+                # Check if the node already exists in the plot
+                sub = [index for index,n in enumerate(verts) if n is child]
+                if len(sub) > 0:
+                    # plt.plot((xx, sub[0][1]), (yy, sub[0][2]), c='b')
+                    # sub_xx = math.cos(math.pi * 2 * pos[child_index][0]) * pos[child_index][1]
+                    # sub_yy = math.sin(math.pi * 2 * pos[child_index][0]) * pos[child_index][1]
+                    # # Number of times the node is a child of this parent
+                    # pars = len([p for p in sub[0][0].parents if p is self])
+                    # if pars == 0:
+                    #     plt.plot((xx, sub_xx), (yy, sub_yy), c='b', lw=200)
+                    #     print(sub_xx, sub_yy)
+                    # else:
+                    #     plt.plot((xx, sub_xx), (yy, sub_yy), c='b', lw=200)
+                    child_index = sub[0]
+                    edges.append((index, child_index))
+                # Plot children
+                else:
+                    child_index = len(verts)
+                    verts.append(child)
+                    pos.append(None)
+                    # Position
+                    sub_x0 = x0 +  i    / (len(self)) * (x1 - x0)
+                    sub_x1 = x0 + (i+1) / (len(self)) * (x1 - x0)
+                    sub_x, sub_y = child.disp(sub_x0, sub_x1, sub_y, False, verts, edges, pos)
+                    sub_xx = math.cos(math.pi * 2 * sub_x) * sub_y
+                    sub_yy = math.sin(math.pi * 2 * sub_x) * sub_y
+                    # points
+                    # x_points = xx, (sub_xx + xx) / 2, sub_xx
+                    # y_points = yy, (sub_yy + yy) / 2, sub_yy
+                    # plt.plot(x_points, y_points, marker='>', c='k')
+
+                    pos[child_index] = (sub_xx, sub_yy)
+                    edges.append((index, child_index))
+
+        # plt.scatter(xx, yy, c='k', s=200)
+        # plt.text(xx, yy, str(self.value), horizontalalignment='center', verticalalignment='center', color='white')
+
+        if not initial:
+            return x, y
+        else:
+            # print(len(saved))
+            # plt.show()
+
+            fig, ax = plt.subplots()
+            # Create networkxs graph
+            G = nx.MultiDiGraph()
+            G.add_nodes_from(range(len(verts)))
+            G.add_edges_from(edges)
+            nx.set_node_attributes(G, {key: str(node.value) for key,node in enumerate(verts)}, 'label')
+            G.nodes(data=True)
+
+            # pos = nx.kamada_kawai_layout(G)
+            # pos = nx.spring_layout(G)
+            # pos = nx.spectral_layout(G)
+            # pos = nx.arf_layout(G)
+            # pos = nx.planar_layout(G)
+
+            # Draw targets
+            nx.draw_networkx_nodes(
+                G,
+                pos,
+                nodelist=range(len(verts)),
+                node_color='tab:blue',
+            )
+
+            # Draw vertex labels
+            nx.draw_networkx_labels(
+                G,
+                pos,
+                labels = {key: str(node.value) for key,node in enumerate(verts)},
+                font_color="whitesmoke"
+            )
+
+            # Draw edges
+            nx.draw_networkx_edges(
+                G,
+                pos,
+                arrowstyle="->",
+                arrowsize=10,
+                # edge_color = range(G.number_of_edges()),
+                # edge_cmap = plt.cm.gist_rainbow,
+                width=2,
+                alpha=0.5,
+            )
+
+            # ax.set_title(alg + ' Route ({:.3f} units)'.format(minimum))
+            # ax.set_xlim([-.05, 1.05])
+            # ax.set_ylim([-.05, 1.05])
+            # ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
+
+            plt.show()
 
 
 
@@ -333,12 +424,33 @@ def plot_nodes(nodes, x_linspace, **kwargs):
     plt.show()
 
 
+
+
 x = Node('x')
 
 
-if True or __name__ == '__main__':
+if __name__ == '__main__':
+    y = Node('y')
+
 
     x = Node('x')
+    f0 = x + 1
+    f1 = f0 - 1
+    f2 = f1 * f1
+    f3 = f2 / f1
+    f4 = f3 ** f2
+    f = f4.copy()
+    # f = f4
+
+
+    # f = x + x
+
+    # f = x % 8
+    # f = f.copy()
+
+    # f.nodes()
+
+    # print(f[0][1].node_depth())
 
     # ReLu
     # f = Node.if_then_else(
@@ -379,6 +491,10 @@ if True or __name__ == '__main__':
     # plt.plot()
     # plt.show()
 
+
+
+    # plt.gca().set_yscale('log')
+    f.disp()
 
 
     # print(f)
