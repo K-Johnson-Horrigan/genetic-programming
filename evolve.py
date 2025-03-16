@@ -1,8 +1,7 @@
 import random
 import numpy as np
 
-
-# All functions relevant to evolving in a general sense.
+"""Core functions that cannot be replaced"""
 
 #
 # Initialization
@@ -13,7 +12,7 @@ def init_pop(pop_size, init_individual_func, **kwargs):
     return [init_individual_func(**kwargs) for _ in range(pop_size)]
 
 #
-# Reproduction
+# Selection
 #
 
 def tournament_selection(pop, fits, k, **kwargs):
@@ -109,20 +108,26 @@ def run_sim(**kwargs):
     return all_pops, all_fits
 
 
-def run_sims(key, values, num_reps, **kwargs):
+def run_sims(num_reps, test_kwargs, **kwargs):
     """Run multiple tests with different hyperparameters"""
+
+    num_tests = len(test_kwargs) - 1
 
     # This can be saved as a 4D array for easy manipulation and access
     # [test] [replicant] [generation] [individual]
-    all_pops = np.empty((len(values), num_reps, kwargs['num_gens'] + 1, kwargs['pop_size']), dtype=object)
-    all_fits = np.empty((len(values), num_reps, kwargs['num_gens'] + 1, kwargs['pop_size']))
+    all_pops = np.empty((num_tests, num_reps, kwargs['num_gens'] + 1, kwargs['pop_size']), dtype=object)
+    all_fits = np.empty((num_tests, num_reps, kwargs['num_gens'] + 1, kwargs['pop_size']))
 
     # Tests
-    for test, value in enumerate(values):
-        kwargs[key] = value
+    for test_num in range(num_tests):
+        # changes = test_kwargs[test_num]
+        if kwargs['verbose'] > 0: print(f'Test {test_num}')
+        for key,value in zip(test_kwargs[0], test_kwargs[test_num + 1]):
+            if kwargs['verbose'] > 0: print(f'\t{key}: {value}')
+            kwargs[key] = value
         for rep in range(num_reps):
             pops, fits = run_sim(**kwargs)
-            all_pops[test, rep] = pops
-            all_fits[test, rep] = fits
+            all_pops[test_num, rep] = pops
+            all_fits[test_num, rep] = fits
 
     return all_pops, all_fits

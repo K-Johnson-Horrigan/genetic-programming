@@ -1,21 +1,19 @@
 from node import *
 from evolve import *
-from utils import *
-import multiprocessing
-from multiprocessing import Process
+from plot import *
 
-# All functions relevant to genetic programming.
+"""Functions relevant to implementing genetic programming"""
 
 #
 # Initialization
 #
 
-def init_individual(init_tree_depth, ops, terminals, p_branch=0.5, init_call=True, **kwargs):
+def random_tree(init_tree_depth, ops, terminals, p_branch=0.5, init_call=True, **kwargs):
     """Generate a random tree"""
     # Create a branch with an operator value
     if init_call or random.random() < p_branch and init_tree_depth > 0:
         op = random.choice(ops)
-        children = [init_individual(init_tree_depth - 1, ops, terminals, p_branch, False) for _ in range(Node.valid_ops[op])]
+        children = [random_tree(init_tree_depth - 1, ops, terminals, p_branch, False) for _ in range(Node.valid_ops[op])]
         return Node(op, children)
     # Create a leaf
     else:
@@ -25,27 +23,14 @@ def init_individual(init_tree_depth, ops, terminals, p_branch=0.5, init_call=Tru
 # Evaluation
 #
 
-def fitness_helper(node, xs, y_true):
-    # node = pop[i]
-    # y_node = [node(x) for x in xs]
-    # fit = (sum((abs(y_true - y_node)) ** 2) / len(xs)) ** (1/2)
-    # fit = sum(abs(y_true - y_node))
-    # fits.append(fit)
-    fit = node
-    return fit
-
-def fitness_func(pop, target_func, domains, **kwargs):
+def mse(pop, target_func, domains, **kwargs):
     """Calculate the fitness value of all chromosomes in a population"""
-    # xs = np.linspace(*x_linspace)
     xs = [np.linspace(*domain) for domain in domains]
-
     xs = np.array(np.meshgrid(*xs)).reshape((len(xs), -1)).T
-
-    # y_true =
-    y_true = [target_func(*list(x)) for x in xs]
+    y_true = np.array([target_func(*list(x)) for x in xs])
     fits = np.empty(len(pop))
     for i,node in enumerate(pop):
-        y_node = [node(x) for x in xs]
+        y_node = [node(*x) for x in xs]
         fit = (sum((abs(y_true - y_node)) ** 2) / len(xs)) ** (1/2)
         # fit = sum(abs(y_true - y_node))
         # fits.append(fit)
@@ -134,6 +119,7 @@ def crossover(a, b, max_subtree_depth, max_tree_depth, verbose, **kwargs):
 #
 
 def logical_or(*x): return bool(x[0]) or bool(x[1])
+def f(x): return x**5 - 2*x**3 + x
 
 #
 # Default kwargs
@@ -141,69 +127,56 @@ def logical_or(*x): return bool(x[0]) or bool(x[1])
 
 kwargs = {
     'seed': None,
+    'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates
+
     'num_reps': 4,
     'num_gens': 100,
-    'pop_size': 600, #600,
-    'max_tree_depth': 200, #400,
+    'pop_size': 600, #Default 600
+    'max_tree_depth': 200, #Default 400
     'max_subtree_depth': 4,
-    'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates
-    'algebraic': False, # Simplify before evaluating
+
+    'init_individual_func': random_tree,
     'terminals': ('x',),
     'ops': ('+','-','*','/','**'),
-    'init_individual_func': init_individual,
     'p_branch': 0.5,
     'init_tree_depth': 4,
-    'fitness_func': fitness_func,
-    'x_linspace': (0, 15, 16),  # The domain of the problem expressed using np.linspace
+
+    'fitness_func': mse,
+    'domains': ((0, 1, 50),),  # The domain of the problem expressed using np.linspace
+
     'crossover_func': crossover,
     'k': 4, # Number of randomly chosen parents for each tournament
     'p_c': 0.9, # Probability of crossover
     'keep_parents': 4, # Must be even
+
     'mutate_func': subtree_mutation,
-    'p_m': 0.5, # Probability of a bit mutating
+    'p_m': 0.5, # Probability of mutation
 }
 
 if __name__ == '__main__':
-
-    # kwargs['name'] = 'const2'
-    # kwargs['label_title'] = 'Types of Operations'
-    # kwargs['labels'] = [
-    #     '4-ops',
-    #     '5-ops',
-    #     'all-ops'
-    # ]
-    # kwargs['key'] = 'ops'
-    # kwargs['values'] = [
-    #     ['+', '-', '*', '/'],
-    #     ['+', '-', '*', '/', '**'],
-    #     ['+', '-', '*', '/', '**', 'min', 'max', 'abs', 'if_then_else', '&', '|']
-    # ]
 
     kwargs['name'] = 'logical_or'
     kwargs['target_func'] = logical_or
     kwargs['terminals'] = ('x_0', 'x_1')
     kwargs['domains'] = ((0,1,2), (0,1,2))
     kwargs['num_gens'] = 10
-    kwargs['label_title'] = 'Types of Operations'
-    kwargs['labels'] = [
-        '4-ops',
-        '5-ops',
-        'all-ops'
+    kwargs['test_kwargs'] = [
+        ['labels', 'ops'                      ],
+        ['4-ops' , ['+', '-', '*', '/']       ],
+        ['5-ops' , ['+', '-', '*', '/', '**'] ],
     ]
-    kwargs['key'] = 'ops'
-    kwargs['values'] = [
-        ['+', '-', '*', '/'],
-        ['+', '-', '*', '/', '**'],
-        ['+', '-', '*', '/', '**', 'min', 'max', 'abs', 'if_then_else', '&', '|']
-    ]
+
+    # kwargs['name'] = 'test'
+    # kwargs['target_func'] = f
+    # kwargs['num_gens'] = 10
+    # kwargs['legend_title'] = 'Types of Operations'
+    # kwargs['test_kwargs'] = [
+    #     ['labels', 'ops'                      ],
+    #     ['4-ops' , ['+', '-', '*', '/']       ],
+    #     ['5-ops' , ['+', '-', '*', '/', '**'] ],
+    # ]
 
     # Run simulation
-    # all_pops, all_fits = run_sims(**kwargs)
-    # plot_sims(all_pops, all_fits, **kwargs)
-    # save_all(all_pops, all_fits, kwargs)
-
-
-    x_0, x_1 = Node('x_0'), Node('x_1')
-    y = fitness_func([x_0], **kwargs)
-
-    print(y)
+    all_pops, all_fits = run_sims(**kwargs)
+    save_all(all_pops, all_fits, kwargs)
+    plot_results(all_pops, all_fits, **kwargs)
