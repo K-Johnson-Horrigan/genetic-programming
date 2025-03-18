@@ -1,6 +1,7 @@
 import math
 from math import sin, cos
 
+import numpy as np
 import sympy as sp
 
 from plot import plot_nodes, plot_tree
@@ -107,7 +108,7 @@ class Node:
 
     def expanded_copy(self):
         """Returns a recursive deepcopy of all Nodes"""
-        return Node(self.value, [child.copy() for child in self])
+        return Node(self.value, [child.expanded_copy() for child in self])
 
     def to_lists(self, verts=None, edges=None):
         """Returns lists representing the vertices and edges"""
@@ -157,18 +158,23 @@ class Node:
 
         if type(self.value) is str:
             match self.value:
-                case 'x': return x[0]
-                case 'y': return x[1]
-                case 'z': return x[2]
+                # Operations
                 case '+': return self[0](*x) + self[1](*x)
                 case '-': return self[0](*x) - self[1](*x)
                 case '*': return self[0](*x) * self[1](*x)
+                # case '**':
+                #     s0, s1 = self[0](*x), self[1](*x)
+                #     if s0 == 0 and s1 < 0:
+                #         return 1
+                #     else:
+                #         return self[0](*x) ** self[1](*x)
+
                 case '**':
                     s0, s1 = self[0](*x), self[1](*x)
-                    if s0 == 0 and s1 < 0:
+                    if s0 == 0 and (np.isreal(s1) == True or np.real(s1) < 0):
                         return 1
                     else:
-                        return self[0](*x) ** self[1](*x)
+                        return np.power(s0, s1)  # ** s1
                 case '/':
                     s0, s1 = self[0](*x), self[1](*x)
                     return 1 if s1 == 0 else s0 / s1
@@ -188,6 +194,13 @@ class Node:
                 case '<<': return self[0](*x) << self[1](*x)
                 case 'sin': return sin(self[0](*x))
                 case 'cos': return cos(self[0](*x))
+                case 'neg': return -self[0](*x)
+                # Terminals and constants
+                case 'x': return x[0]
+                case 'y': return x[1]
+                case 'z': return x[2]
+                case 'e': return math.e
+                case 'i': return 1j
                 case _: return x[int(''.join([s for s in self.value if s.isdigit()]))]
         return self.value
 
@@ -253,6 +266,10 @@ class Node:
     def __rshift__(self, other): return Node.op('>>',  self, other)
     def __mod__ (self, other): return Node.op('%',self, other)
 
+    @staticmethod
+    def max(*args): return Node.op('max', *args)
+    @staticmethod
+    def min(*args): return Node.op('min', *args)
     @staticmethod
     def sin(arg): return Node.op('sin', arg)
     @staticmethod
@@ -329,6 +346,13 @@ class Node:
                     else:
                         k = int(math.log2(s1))
                         return ((((s0 >> k-1) % 2) << k-1) + (s0 % 2**(k-1))).limited()
+                case 'sin':
+                    s0 = self[0].limited()
+                    e = Node('e')
+                    # i = (-Node(1)) ** (Node(1) / Node(2))
+                    i = Node('i')
+                    return (e ** (i * s0) - e ** (-i * s0)) / (2 * i)
+
                 case _: return self
         else:
             return Node.const(self.value)
@@ -371,10 +395,19 @@ class Node:
 
 
 if __name__ == '__main__':
+    x = Node('x')
+    x_0 = x
+    x_1 = Node('x_1')
 
-    # x = Node('x')
-    # y = Node('y')
-    #
+    # f = ((((x_0-((1-(-1**x_0))/2))/((x/x)+(x/x)))-((1-(-1**((x_0-((1-(-1**x_0))/2))/((x/x)+(x/x)))))/2))/((x/x)+(x/x)))
+    # plot_nodes([f], domains=[(0, 31, 32)])
+
+    f = Node.sin(x)
+    plot_nodes([f, f.limited()], domains=[(0, 2*math.pi, 16)])
+
+    # f = (x_0 / (x_1 - ((x_1 / x_0) - x_0)))
+    # print(f(1,1))
+
     # f0 = x + 1
     # f1 = f0 - x
     # f2 = f1 * f1
@@ -390,13 +423,15 @@ if __name__ == '__main__':
     # f2 = f1 * f1
     # f3 = f2 / f2
     # f4 = f3 ** f3
-    # f = f4.copy()
+
+    # f = x + x
+    # f = f + f
+    # f = f + f.expanded_copy()
+    # f = f.expanded_copy()
 
     # f = x
 
-    x = Node('x')
-
-    f = (x + 1) + x
+    # f = -x
 
     # f0 = -x
     # f1 = Node.max(x, f0)
@@ -404,18 +439,18 @@ if __name__ == '__main__':
     # f3 = Node.cos(f1)
     # f4 = Node.cos(f2)
     # f5 = f3 - f4
-    #
     # f = f5
 
     # f = x & x + 1
     # f = x % 4
     # f = x + 1
 
-    print(f)
-    print(f.limited())
+    # print(f)
+    # print(f.limited())
+    # print(f.limited().to_lists())
 
     # plot_nodes([f, f.limited()], domains=[(0,31,32)])
-    plot_tree(f)
+    # plot_tree(f.limited(), 0)
 
 
     # ReLu

@@ -1,6 +1,11 @@
+import numpy as np
+
 from node import *
 from evolve import *
 from plot import *
+from utils import save_all
+
+from math import sin, cos
 
 """Functions relevant to implementing genetic programming"""
 
@@ -46,6 +51,27 @@ def mse(pop, target_func, domains, **kwargs):
 
     fits = np.nan_to_num(fits, nan=1000000, posinf=1000000)
 
+    return fits
+
+def correlation(pop, target_func, domains, **kwargs):
+    """Calculate the fitness value of all chromosomes in a population"""
+    xs = [np.linspace(*domain) for domain in domains]
+    xs = np.array(np.meshgrid(*xs)).reshape((len(xs), -1)).T
+    y_true = np.array([target_func(*list(x)) for x in xs])
+    y_true_mean = np.mean(y_true)
+    fits = np.empty(len(pop))
+    for i,node in enumerate(pop):
+        y_node = np.array([node(*x) for x in xs])
+        y_node_mean = np.mean(y_node)
+        sum_true_node = sum((y_true - y_true_mean) * (y_node - y_node_mean))
+        sum_true_2 = sum((y_true - y_true_mean)**2)
+        sum_node_2 = sum((y_node - y_node_mean)**2)
+        R = sum_true_node / (sum_true_2 * sum_node_2) ** (1/2)
+        fit = 1 - R**2
+        # Post processing
+        fits[i] = fit
+    # Replace inf and nan to arbitrary large values
+    fits = np.nan_to_num(fits, nan=1000000, posinf=1000000)
     return fits
 
 #
@@ -120,6 +146,25 @@ def crossover(a, b, max_subtree_depth, max_tree_depth, verbose, **kwargs):
 
 def logical_or(*x): return bool(x[0]) or bool(x[1])
 def f(x): return x**5 - 2*x**3 + x
+def mod2k(*x): return x[0] % (2 ** x[1])
+def xor_and_xor(*x): return (int(x[0]) ^ int(x[1])) & (int(x[2]) ^ int(x[3]))
+
+#
+# Initial pops
+#
+
+def init_indiv(**kwargs):
+    x_0 = Node('x_0')
+    x_1 = Node('x_1')
+    f = x_0 >> 2
+    f = f.limited()
+    return f
+
+def init_sin(**kwargs):
+    x = Node('x')
+    f = Node.sin(x)
+    f = f.limited()
+    return f
 
 #
 # Default kwargs
@@ -129,7 +174,7 @@ kwargs = {
     'seed': None,
     'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates
 
-    'num_reps': 4,
+    'num_reps': 1,
     'num_gens': 100,
     'pop_size': 600, #Default 600
     'max_tree_depth': 200, #Default 400
@@ -155,20 +200,71 @@ kwargs = {
 
 if __name__ == '__main__':
 
-    kwargs['name'] = 'logical_or'
-    kwargs['target_func'] = logical_or
-    kwargs['terminals'] = ('x_0', 'x_1')
-    kwargs['domains'] = ((0,1,2), (0,1,2))
-    kwargs['num_gens'] = 10
+    # kwargs['name'] = 'logical_or'
+    # kwargs['target_func'] = logical_or
+    # kwargs['terminals'] = ('x_0', 'x_1')
+    # kwargs['domains'] = ((0,1,2), (0,1,2))
+    # kwargs['num_gens'] = 10
+    # kwargs['test_kwargs'] = [
+    #     ['labels', 'ops'                      ],
+    #     ['4-ops' , ['+', '-', '*', '/']       ],
+    #     ['5-ops' , ['+', '-', '*', '/', '**'] ],
+    # ]
+
+    # kwargs['name'] = 'mod'
+    # kwargs['target_func'] = mod2k
+    # kwargs['fitness_func'] = correlation
+    # kwargs['terminals'] = ('x_0', 'x_1')
+    # kwargs['domains'] = ((0,15,16), (1,2,2))
+    # kwargs['init_individual_func'] = init_indiv
+    # # kwargs['num_gens'] = 100
+    # kwargs['test_kwargs'] = [
+    #     ['labels', 'ops'                      ],
+    #     # ['4-ops' , ['+', '-', '*', '/']       ],
+    #     ['5-ops' , ['+', '-', '*', '/', '**'] ],
+    # ]
+
+    # kwargs['name'] = 'logic'
+    # kwargs['target_func'] = xor_and_xor
+    # kwargs['fitness_func'] = correlation
+    # kwargs['p_c'] = 0.5
+    # kwargs['p_m'] = 0.5
+    # kwargs['terminals'] = ('x_0', 'x_1', 'x_2', 'x_3')
+    # kwargs['domains'] = ((0,1,2),(0,1,2),(0,1,2),(0,1,2))
+    # kwargs['init_individual_func'] = random_tree
+    # kwargs['num_gens'] = 50
+    # kwargs['test_kwargs'] = [['labels','p_c','p_m']] + [[f'{p_m} {p_c}', p_c, p_m] for p_m in np.linspace(0.1,0.9,5) for p_c in np.linspace(0.1,0.9,5)]
+    #
+    # print(kwargs['test_kwargs'])
+        # [0.3] * 2,
+        # [0.5] * 2,
+        # [0.7] * 2,
+
+
+
+
+    kwargs['name'] = 'cos'
+    kwargs['target_func'] = cos
+    kwargs['fitness_func'] = correlation
+    kwargs['terminals'] = ('x','e','i',)
+    kwargs['domains'] = ((0, 2*math.pi, 31),)
+    # kwargs['init_individual_func'] = init_sin
+    kwargs['num_gens'] = 1
     kwargs['test_kwargs'] = [
-        ['labels', 'ops'                      ],
-        ['4-ops' , ['+', '-', '*', '/']       ],
-        ['5-ops' , ['+', '-', '*', '/', '**'] ],
+        # ['labels', 'init_individual_func'],
+        # ['random', random_tree],
+        # ['sin', init_sin],
+
+        ['labels', 'init_individual_func', 'fitness_func'],
+        ['random', random_tree, correlation],
+        ['sin', init_sin, correlation],
+        ['random_mse', random_tree, mse],
+        ['sin_mse', init_sin, mse],
     ]
 
     # kwargs['name'] = 'test'
     # kwargs['target_func'] = f
-    # kwargs['num_gens'] = 10
+    # # kwargs['num_gens'] = 10
     # kwargs['legend_title'] = 'Types of Operations'
     # kwargs['test_kwargs'] = [
     #     ['labels', 'ops'                      ],
