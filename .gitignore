@@ -163,3 +163,7 @@ cython_debug/
 /saves
 saves/fits.npy
 /saves
+.idea/genetic-programming.iml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/vcs.xml

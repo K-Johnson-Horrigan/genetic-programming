@@ -41,5 +41,5 @@ def load_all(name):
     for i, test_kwarg in enumerate(kwargs['test_kwargs'][0]):
         if test_kwarg.endswith('_func'):
             for j in range(1, len(kwargs['test_kwargs'])):
-                kwargs['test_kwargs'][j][i] = getattr(gp, kwargs['test_kwargs'][j][i].__name__)
+                kwargs['test_kwargs'][j][i] = getattr(gp, kwargs['test_kwargs'][j][i])
     return all_pops, all_fits, kwargs

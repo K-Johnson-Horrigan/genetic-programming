@@ -36,33 +36,41 @@ def plot_min_fit(all_pops, all_fits, title=None, legend_title=None, **kwargs):
     plt.show()
 
 
-def plot_nodes(nodes, fitness_func=None, labels=None, title=None, legend_title=None, **kwargs):
+def plot_nodes(nodes, result_fitness_func=None, labels=None, title=None, legend_title=None, eval_method=None, **kwargs):
     """Plot all given nodes and the fitness function"""
     xs = np.linspace(*kwargs['domains'][0])
     # Plot target function if given
-    if fitness_func is not None:
-        # label = f'${str(kwargs['target_func'](sp.Symbol("x"))).replace("**","^")}$'
-        label = 'Fitness'
+    if 'target_func' in kwargs and result_fitness_func is not None:
+        label = 'Target Function'
         target_ys = [kwargs['target_func'](x) for x in xs]
         plt.scatter(xs, target_ys, label=label)
-        plt.plot(xs, target_ys)
+        plt.plot(xs, target_ys, lw=5)
     # Plot nodes
     for i,node in enumerate(nodes):
-        if 'test_kwargs' in kwargs:
-            label = f'\"{kwargs['test_kwargs'][i+1][0]}\", Fitness = {fitness_func([node], **kwargs)[0]:.3f}'
+        if labels is not None:
+            label = labels[i]
+        elif 'test_kwargs' in kwargs:
+            label = kwargs['test_kwargs'][i + 1][0]
         else:
-            # Label is the simplified expression
-            # label = f'${str(node(sp.Symbol("x"))).replace("**","^")}$'
-            label = None
-        node_ys = [node(i) for i in xs]
-        plt.scatter(xs, node_ys, label=label)
-        plt.plot(xs, node_ys)
+            label = ''
+        # Display fitness value
+        if 'target_func' in kwargs and result_fitness_func is not None:
+            label += f' Fitness = {result_fitness_func([node], **kwargs)[0]:f}'
+        # node_ys = [node(i) for i in xs]
+        node_ys = [node(i, eval_method=eval_method) for i in xs]
+        plt.scatter(xs, np.real(node_ys), label=label)
+        plt.plot(xs, np.real(node_ys))
+        if np.iscomplex(node_ys).any():
+            label = label.split('Fitness')[0] + 'Imaginary Part'
+            plt.scatter(xs, np.imag(node_ys), label=label)
+            plt.plot(xs, np.imag(node_ys), ':')
+
     plt.title(title)
     plt.legend(title=legend_title)
     plt.show()
 
 
-def plot_best(all_pops, all_fits, run=None, gen=slice(None), **kwargs):
+def plot_best(all_pops, all_fits, run=None, gen=-1, **kwargs):
     """Plot the best result of the given run and gen"""
     if run is None:
         runs = range(all_pops.shape[0])
@@ -190,18 +198,20 @@ def plot_tree(node, layout=0, theta0=-.5, theta1=.5, r=0, initial=True, verts=No
             pos,
             nodelist=range(len(verts)),
             node_color='tab:blue',
+            node_size=600,
         )
         nx.draw_networkx_labels(
             G,
             pos,
             labels = {key: str(node.value) for key,node in enumerate(verts)},
-            font_color="whitesmoke"
+            font_color="whitesmoke",
+            font_size=10,
         )
         nx.draw_networkx_edges(
             G,
             pos,
             arrowstyle="->",
-            arrowsize=10,
+            arrowsize=20,
             # edge_color = range(G.number_of_edges()),
             # edge_cmap = plt.cm.gist_rainbow,
             width=2,
@@ -220,6 +230,6 @@ def plot_results(all_pops, all_fits, **kwargs):
 
 
 if __name__ == '__main__':
-    name = 'mod'
+    name = 'const_32'
     all_pops, all_fits, kwargs = load_all(name)
     plot_results(all_pops, all_fits, **kwargs)

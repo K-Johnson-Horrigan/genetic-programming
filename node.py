@@ -12,7 +12,7 @@ class Node:
 
     # All possible values for a node and the number of children it can have
     valid_ops = {
-        '---': 1,
+        'neg': 1,
         '+': 2,
         '-': 2,
         '*': 2,
@@ -53,7 +53,7 @@ class Node:
             self.children = children if children is not None else []
 
     #
-    # Children
+    # Children and Parents
     #
 
     @property
@@ -73,7 +73,25 @@ class Node:
     def __setitem__(self, i, value): self.children[i] = value
     def __iter__(self): yield from self.children
 
+    def reset_parents(self):
+        """Remove all parent pointers from all nodes"""
+        if len(self.parents) > 0:
+            self.parents = []
+            for child in self:
+                child.reset_parents()
+
+    def set_parents(self):
+        """Append all parent pointers back to the nodes"""
+        for child in self.children:
+            child.parents.append(self)
+            child.set_parents()
+
+    #
+    # Utility
+    #
+
     def reset_index(self):
+        """Set the temp_index of all nodes to None"""
         if self.temp_index is not None:
             self.temp_index = None
             for child in self.children:
@@ -91,6 +109,20 @@ class Node:
                 child.nodes(node_list)
         return node_list
 
+    def index_in(self, l):
+        """Returns the first index of this object in the given iterable. The `in` keyword and `index` method will not work for Nodes"""
+        for i,node in enumerate(l):
+            if node is self:
+                return i
+        return -1
+
+    def copy(self):
+        return Node.from_lists(*self.to_lists())
+
+    #
+    # Information
+    #
+
     def height(self):
         """Longest distance to a leaf"""
         return max([0] + [1 + child.height() for child in self.children])
@@ -103,12 +135,70 @@ class Node:
         """Returns the root Node of the tree"""
         return self if self.parent is None else self.parent.root()
 
-    def copy(self):
-        return Node.from_lists(*self.to_lists())
+    #
+    # String Representation
+    #
 
-    def expanded_copy(self):
+    def __str__(self):
+        if len(self) == 0:
+            return str(self.value)
+        elif self.value in ['+','-','*','/','**','&','|','%','>>','<<','<','>','<=','>=','==']:
+            return f'({self[0]}{self.value}{self[1]})'
+        else:
+            return self.value + '(' + ','.join([str(child) for child in self]) + ')'
+
+    def __repr__(self):
+        return str(self)
+
+    #
+    # Modification
+    #
+
+    def replace(self, new_node):
+        """Replaces this node and all children with a new branch"""
+        root = self.root()
+        # Create a copy of the new node
+        new_node = new_node.copy()
+        # Return the new node if self is the root of the tree
+        # if self.parent is None: return new_node
+        for parent in self.parents:
+            # Parent's index for self
+            self_index = self.index_in(parent)
+            # Replace the parent's reference to self
+            parent[self_index] = new_node
+        # Replace the new Node's reference to parent
+        # new_node.parents = self.parents
+        # Remove self reference to parent
+        # self.parents = None
+        # Return the full new tree
+        root.reset_parents()
+        root.set_parents()
+        return root
+
+    # def old_replace(self, new_node):
+    #     """Replaces this node and all children with a new branch"""
+    #     # Create a copy of the new node
+    #     new_node = new_node.copy()
+    #     # Return the new node if self is the root of the tree
+    #     if self.parent is None: return new_node
+    #     # Parent's index for self
+    #     parent_index = self.parent.children.temp_index(self)
+    #     # Replace the parent's reference to self
+    #     self.parent[parent_index] = new_node
+    #     # Replace the new Node's reference to parent
+    #     new_node.parent = self.parent
+    #     # Remove self reference to parent
+    #     self.parent = None
+    #     # Return the full new tree
+    #     return new_node.root()
+
+    #
+    # Conversion
+    #
+
+    def to_tree(self):
         """Returns a recursive deepcopy of all Nodes"""
-        return Node(self.value, [child.expanded_copy() for child in self])
+        return Node(self.value, [child.to_tree() for child in self])
 
     def to_lists(self, verts=None, edges=None):
         """Returns lists representing the vertices and edges"""
@@ -132,95 +222,90 @@ class Node:
             nodes[edge[1]].parents.append(nodes[edge[0]])
         return nodes[0]
 
-    def replace(self, new_node):
-        """Replaces this node and all children with a new branch"""
-        # Create a copy of the new node
-        new_node = new_node.copy()
-        # Return the new node if self is the root of the tree
-        if self.parent is None: return new_node
-        # Parent's index for self
-        parent_index = self.parent.children.temp_index(self)
-        # Replace the parent's reference to self
-        self.parent[parent_index] = new_node
-        # Replace the new Node's reference to parent
-        new_node.parent = self.parent
-        # Remove self reference to parent
-        self.parent = None
-        # Return the full new tree
-        return new_node.root()
-
     #
     # Evaluation
     #
 
-    def __call__(self, *x):
+    def __call__(self, *x, eval_method=None):
         """Calling evaluates the value of the entire tree"""
 
-        if type(self.value) is str:
-            match self.value:
-                # Operations
-                case '+': return self[0](*x) + self[1](*x)
-                case '-': return self[0](*x) - self[1](*x)
-                case '*': return self[0](*x) * self[1](*x)
-                # case '**':
-                #     s0, s1 = self[0](*x), self[1](*x)
-                #     if s0 == 0 and s1 < 0:
-                #         return 1
-                #     else:
-                #         return self[0](*x) ** self[1](*x)
+        match eval_method:
 
-                case '**':
-                    s0, s1 = self[0](*x), self[1](*x)
-                    if s0 == 0 and (np.isreal(s1) == True or np.real(s1) < 0):
-                        return 1
-                    else:
-                        return np.power(s0, s1)  # ** s1
-                case '/':
-                    s0, s1 = self[0](*x), self[1](*x)
-                    return 1 if s1 == 0 else s0 / s1
-                case '|': return self[0](*x) or self[1](*x)
-                case '&': return self[0](*x) and self[1](*x)
-                case '<': return self[0](*x) < self[1](*x)
-                case '>': return self[0](*x) > self[1](*x)
-                case '<=': return self[0](*x) <= self[1](*x)
-                case '>=': return self[0](*x) >= self[1](*x)
-                case '==': return self[0](*x) == self[1](*x)
-                case 'min': return min(self[0](*x), self[1](*x))
-                case 'max': return max(self[0](*x), self[1](*x))
-                case 'abs': return abs(self[0](*x))
-                case 'if_then_else': return self[1](*x) if self[0](*x) else self[2](*x)
-                case '%':  return self[0](*x) % self[1](*x)
-                case '>>': return self[0](*x) >> self[1](*x)
-                case '<<': return self[0](*x) << self[1](*x)
-                case 'sin': return sin(self[0](*x))
-                case 'cos': return cos(self[0](*x))
-                case 'neg': return -self[0](*x)
-                # Terminals and constants
-                case 'x': return x[0]
-                case 'y': return x[1]
-                case 'z': return x[2]
-                case 'e': return math.e
-                case 'i': return 1j
-                case _: return x[int(''.join([s for s in self.value if s.isdigit()]))]
-        return self.value
+            # Returns x once f(x)==0 otherwise x:=f(x)
+            case 'zero':
+                return_value = self(*x)
+                for _ in range(100):
+                    new_return_value = self(return_value)
+                    print(return_value)
+                    if new_return_value == 0:
+                        return new_return_value
+                    return_value = new_return_value
+                return return_value
+
+            # Evaluate x:=f(x) until even
+            case 'even':
+                return_value = self(*x)
+                for _ in range(100):
+                    return_value = self(return_value)
+                    if return_value % 2 == 0: break
+                return return_value // 2
+
+            # Default evaluation
+            case _:
+                if type(self.value) is str:
+                    match self.value:
+                        # Operations
+                        case '+': return self[0](*x) + self[1](*x)
+                        case '-': return self[0](*x) - self[1](*x)
+                        case '*':
+                            s0 = self[0](*x)
+                            if s0 == 0:
+                                return 0
+                            else:
+                                return s0 * self[1](*x)
+                        case '**':
+                            s0, s1 = self[0](*x), self[1](*x)
+                            if s0 == 0 and (np.isreal(s1) or np.real(s1) < 0):
+                                return 1
+                            else:
+                                # Prevent large exponents using numpy
+                                return np.power(s0, s1)
+                        case '/':
+                            s0, s1 = self[0](*x), self[1](*x)
+                            return 1 if s1 == 0 else s0 / s1
+                        case '|': return self[0](*x) or self[1](*x)
+                        case '&': return self[0](*x) and self[1](*x)
+                        case '<': return self[0](*x) < self[1](*x)
+                        case '>': return self[0](*x) > self[1](*x)
+                        case '<=': return self[0](*x) <= self[1](*x)
+                        case '>=': return self[0](*x) >= self[1](*x)
+                        case '==': return self[0](*x) == self[1](*x)
+                        case 'min': return min(self[0](*x), self[1](*x))
+                        case 'max': return max(self[0](*x), self[1](*x))
+                        case 'abs': return abs(self[0](*x))
+                        case 'if_then_else': return self[1](*x) if self[0](*x) else self[2](*x)
+                        case '%':  return self[0](*x) % self[1](*x)
+                        case '>>': return self[0](*x) >> self[1](*x)
+                        case '<<': return self[0](*x) << self[1](*x)
+                        case 'sin': return sin(self[0](*x))
+                        case 'cos': return cos(self[0](*x))
+                        case 'neg': return -self[0](*x)
+                        case 'get_bit': return (int(self[0](*x)) >> self[1](*x)) & 1
+                        case 'get_bits':
+                            s0, s1, s2 = self[0](*x), self[1](*x), self[2](*x)
+                            return (int(s0) >> s1) % (2 ** s2)
+                        # Terminals and constants
+                        case 'x': return x[0]
+                        case 'y': return x[1]
+                        case 'z': return x[2]
+                        case 'e': return math.e
+                        case 'i': return 1j
+                        # Arbitrary Variable
+                        case _: return x[int(''.join([s for s in self.value if s.isdigit()]))]
+                return self.value
 
     def simplify(self):
         return sp.sympify(self(sp.Symbol('x')))
-
-    #
-    # Utils
-    #
-
-    def __str__(self):
-        if len(self) == 0:
-            return str(self.value)
-        elif self.value in ['+','-','*','/','**','&','|','%','>>','<<','<','>','<=','>=','==']:
-            return f'({self[0]}{self.value}{self[1]})'
-        else:
-            return self.value + '(' + ','.join([str(child) for child in self]) + ')'
-
-    def __repr__(self):
-        return str(self)
 
     #
     # Native Python Conversion
@@ -250,7 +335,6 @@ class Node:
     def __rtruediv__(self, other): return Node.op('/',  other, self)
     def      __pow__(self, other): return Node.op('**', self, other)
     def     __rpow__(self, other): return Node.op('**', other, self)
-
     def  __neg__(self): return Node.op('neg',  self)
     def  __and__(self, other): return Node.op('&',  self, other)
     def __rand__(self, other): return Node.op('&',  other, self)
@@ -264,7 +348,7 @@ class Node:
     def   __ge__(self, other): return Node.op('>=',  self, other)
     def __lshift__(self, other): return Node.op('<<',  self, other)
     def __rshift__(self, other): return Node.op('>>',  self, other)
-    def __mod__ (self, other): return Node.op('%',self, other)
+    def __mod__(self, other): return Node.op('%',self, other)
 
     @staticmethod
     def max(*args): return Node.op('max', *args)
@@ -274,6 +358,10 @@ class Node:
     def sin(arg): return Node.op('sin', arg)
     @staticmethod
     def cos(arg): return Node.op('cos', arg)
+    @staticmethod
+    def get_bit(*args): return Node.op('get_bit', *args)
+    @staticmethod
+    def get_bits(f, start, length): return Node.op('get_bits', f, start, length)
     @staticmethod
     def if_then_else(cond, if_true, if_false=None):
         return Node.op('if_then_else', cond, if_true, if_false)
@@ -309,7 +397,9 @@ class Node:
                 case '&': return self[0].limited() * self[1].limited()
                 case 'neg': return 0 - self[0].limited()
                 case '==': return 0 / (self[0].limited() - self[1].limited())
-                case 'abs': return (self[0].limited() ** 2) ** (1 / 2)
+                case 'abs':
+                    s0 = self[0].limited()
+                    return (s0 * s0) ** (1 / 2)
                 case '<':
                     s0 = self[0].limited()
                     s1 = self[1].limited()
@@ -352,59 +442,88 @@ class Node:
                     # i = (-Node(1)) ** (Node(1) / Node(2))
                     i = Node('i')
                     return (e ** (i * s0) - e ** (-i * s0)) / (2 * i)
-
+                case 'get_bits':
+                    s0 = self[0]
+                    s1 = self[1].value
+                    s2 = self[2].value
+                    return ((s0 >> s1) % (2 ** s2)).limited()
                 case _: return self
         else:
             return Node.const(self.value)
 
-    # def  __neg__(self): return 0 - self
-    # def  __and__(self, other): return self * other
-    # def __rand__(self, other): return other * self
-    # def   __or__(self, other): return self ** 0 ** other
-    # def  __ror__(self, other): return other ** 0 ** self
-    # def   __eq__(self, other): return 0 / (self - other)
-    # def  __abs__(self): return (self * self) ** (1 / 2)
-    # def   __lt__(self, other): return (1 - abs(self - other) / (self - other)) / 2
-    # def   __gt__(self, other): return (1 - abs(other - self) / (other - self)) / 2
-    # def   __le__(self, other): return (abs(other - self) / (other - self) + 1) / 2
-    # def   __ge__(self, other): return (abs(self - other) / (self - other) + 1) / 2
-    # def __lshift__(self, other): return self * 2 ** other
-    # def __rshift__(self, other): return self if other == 0 else ((self >> other-1) - (self >> other-1) % 2) / 2
 
-    # def __mod__(self, other):
-    #     if other == 1:
-    #         return Node(0)
-    #     elif other == 2:
-    #         return (1 - (-1) ** self) / 2
-    #     else:
-    #         k = int(math.log2(other))
-    #         return (((self >> k-1) % 2) << k-1) + (self % 2**(k-1))
-    #
-    # @staticmethod
-    # def min(*args): return args[0] * (args[0] < args[1]) + args[1] * (args[0] >= args[1])
-    # @staticmethod
-    # def max(*args): return args[0] * (args[0] > args[1]) + args[1] * (args[0] <= args[1])
-    # @staticmethod
-    # def if_then_else(cond, if_true, if_false=None):
-    #     if if_false is None:
-    #         return cond * if_true
-    #     else:
-    #         return cond * if_true + (1 - cond) * if_false
-    # @staticmethod
-    # def read_bit(n, x): return ((x % n) - (x % (n/2))) / (n/2)
+
+
+
 
 
 if __name__ == '__main__':
+
     x = Node('x')
-    x_0 = x
-    x_1 = Node('x_1')
 
-    # f = ((((x_0-((1-(-1**x_0))/2))/((x/x)+(x/x)))-((1-(-1**((x_0-((1-(-1**x_0))/2))/((x/x)+(x/x)))))/2))/((x/x)+(x/x)))
-    # plot_nodes([f], domains=[(0, 31, 32)])
 
-    f = Node.sin(x)
-    plot_nodes([f, f.limited()], domains=[(0, 2*math.pi, 16)])
+    # f = Node.if_then_else(
+    #     x == 1,
+    #     0,
+    #     Node.if_then_else(
+    #         x % 2,
+    #         3 * x + 1,
+    #         x / 2,
+    #     )
+    # )
 
+    # l = f.limited()
+
+    print(f(4, eval_method='zero'))
+
+    plot_nodes(
+        [f],
+        domains=((0,15,16),),
+        eval_method='zero'
+    )
+    # plot_tree(f.limited(), 1)
+
+    # print(l)
+
+    # print(l.simplify())
+
+    # f = x + x
+    #
+    # l = [x, 0, x, f]
+    #
+    # i = f.index_in(l)
+    #
+    # x = Node('x')
+    # y = Node('y')
+    # r = [Node(str(i)) for i in range(6)]
+    #
+    #
+    # a = (r[4] - r[3]) + (r[1] + r[5])
+    # b = (r[1] / r[2]) * (r[3] + r[1])
+    #
+    # a0 =  x + 0
+    # a1 = a0 + x
+    # a2 = a1 + a0
+    # a = a2
+    #
+    # print(a)
+    # plot_tree(a)
+    # a1.replace(y)
+    # plot_tree(a)
+    # print(a)
+
+    # print(i)
+
+    # g = x**5 + 32*x**3 + x
+
+    # f = ((-21.077945511687545 * (x - ((x * x) * (x + x)))) + -1.218498355689607e-07)
+
+    # f = ((64.33472816266729*((((x*x)*x)*x)/(((x+x)-x)*(x+x))))+-0.08907341519219569)
+    #
+    # print((f).simplify())
+
+
+    # plot_nodes([f, f.limited()], domains=[(0, 2 * math.pi, 16)])
     # f = (x_0 / (x_1 - ((x_1 / x_0) - x_0)))
     # print(f(1,1))
 
@@ -492,3 +611,34 @@ if __name__ == '__main__':
     # f = (((x+x)*((((((((x+x)*(x/x))*x)+(((x-(x*(x+x)))*x)+(x*x)))+((((x-((x*(((((x-x)-x)/x)+x)/x))/x))/x)*x)*x))+x)/((x-x)+x))-((x+x)*(0-x))))/((x+((x+(((((((((((x/((0/(x-x))*(((x+((x/x)-(x*x)))+(x+((x/x)*x)))*x)))+((x+x)/x))-(((((x/(x-x))+x)/(((((x+x)/x)-((x-x)+x))+x)/x))*x)*(x/x)))+x)+x)/x)-x)/(x*x))/x)-x)+x))/x))-x))
     # f = ((((x+x)**(((((x/x)+x)+x)+x)/x))-x)/((x+x)-x))
     # (((max((if_then_else(x,x,((x*(if_then_else((x|x),abs(x),x)|(abs(x)-(x+x))))|abs(x)))*x),abs(((((min(x,x)+((if_then_else(x,x,x)|(x-x))&x))+x)|x)+max((max((abs(((min(x,x)+max(((((x+min(x,x))|x)|x)+(x&x)),x))+(((((if_then_else(0,x,x)&(x/x))+min(if_then_else(x,x,x),min(x,x)))&(x+x))+abs(x))|(x|x))))+min(x,x)),x)+if_then_else((x-x),x,x)),x))))-x)-min(x,x))*x)
+    # s = 8
+    # n = Node.get_bits(x, 0, s)
+    # c = Node.get_bits(x, s, s) + 1
+    # # c=c n=n
+    # # n == 1
+    # # c=0 n=c
+    # # c == 0
+    # # c=0 n=0
+    # cc = Node.if_then_else(
+    #     n == 1,
+    #     -1,
+    #     Node.if_then_else(
+    #         c == 0,
+    #         0,
+    #         c
+    #     ),
+    # )
+    # nn = Node.if_then_else(
+    #     n == 1,
+    #     c,
+    #     Node.if_then_else(
+    #         c == 0,
+    #         0,
+    #         Node.if_then_else(
+    #             n % 2,
+    #             3 * n + 1,
+    #             n / 2,
+    #         )
+    #     )
+    # )
+    # f = cc * 2**s + nn
