@@ -272,7 +272,7 @@ class Node:
                                 return 1
                             else:
                                 # Prevent large exponents using numpy
-                                return np.power(s0, s1)
+                                return np.power(1.0*s0, s1)
                         case '/':
                             s0, s1 = self[0](*x), self[1](*x)
                             return 1 if s1 == 0 else s0 / s1

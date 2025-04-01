@@ -37,6 +37,7 @@ def fitness_helper(id, node, xs, y_target):
     fit = (sum((abs(y_target - y_actual)) ** 2) / len(xs)) ** (1 / 2)
     return fit
 
+
 def mse(pop, target_func, domains, **kwargs):
     """Calculate the fitness value of all chromosomes in a population"""
     xs = [np.linspace(*domain) for domain in domains]
@@ -121,22 +122,43 @@ def subtree_mutation(a, p_m, verbose, **kwargs):
         a = new_a
     return a
 
-
-def split_mutation(a, p_m, verbose, **kwargs):
-    """Preform a mutation with a probability of p_m"""
+def ancestor_split_mutation(a, p_m, verbose, **kwargs):
+    """Only the direct parent may """
     # Probability of mutation
     if random.random() < p_m:
         a = a.copy()
-        # List of all nodes with no children
-        a_nodes = [n for n in a.nodes() if len(n) == 0]
+        # List of all nodes with multiple parents
+        a_nodes = [n for n in a.nodes() if len(n.parents) > 1]
         old_branch = random.choice(a_nodes)
         if verbose > 1:
             old_a = a.copy()
         new_branch = old_branch.copy()
-        new_a = old_branch.replace(new_branch)
+        old_branch.replace(new_branch)
+        a.reset_parents()
+        a.set_parents()
         if verbose > 1:
-            print(f'Mutation: {old_a} replaces {old_branch} with {new_branch} returns {new_a}')
-        a = new_a
+            print(f'Mutation: {old_a} replaces {old_branch} with {new_branch} returns {a}')
+    return a
+
+def split_mutation(a, p_m, verbose, **kwargs):
+    """Only the direct parent may """
+    # Probability of mutation
+    if random.random() < p_m:
+        a = a.copy()
+        # List of all nodes with multiple parents
+        a_nodes = [n for n in a.nodes() if len(n.parents) > 1]
+        node = random.choice(a_nodes)
+        if verbose > 1:
+            old_a = a.copy()
+        for parent in node.parents:
+            index = node.index_in(parent)
+            new_node = Node(node.value, node.children)
+            parent[index] = new_node
+
+        a.reset_parents()
+        a.set_parents()
+        if verbose > 1:
+            print(f'Mutation: {old_a} splits {node} returns {a}')
     return a
 
 # def pointer_mutation(a, p_m):
@@ -236,7 +258,10 @@ kwargs = {
     'p_c': 0.9, # Probability of crossover
     'keep_parents': 4, # Elitism, must be even
 
-    'mutate_func': subtree_mutation,
+    # 'mutate_func': subtree_mutation,
+    'mutate_funcs': [
+        [subtree_mutation, 0.3]
+    ],
     'p_m': 0.5, # Probability of mutation
 }
 
@@ -328,7 +353,8 @@ if __name__ == '__main__':
     #     ['sin_mse', init_sin, mse],
     # ]
 
-    # kwargs['name'] = 'test'
+    # kwargs['name'] = 'debug'
+    # kwargs['verbose'] = 2
     # kwargs['target_func'] = f
     # kwargs['num_gens'] = 10
     # kwargs['fitness_func'] = mse
@@ -338,6 +364,27 @@ if __name__ == '__main__':
     #     ['4-ops' , ['+', '-', '*', '/']       ],
     #     # ['5-ops' , ['+', '-', '*', '/', '**'] ],
     # ]
+
+    kwargs['name'] = 'debug'
+    kwargs['verbose'] = 2
+    kwargs['target_func'] = f
+    kwargs['num_gens'] = 10
+    # kwargs['fitness_func'] = mse
+    kwargs['legend_title'] = 'Mutations'
+    kwargs['test_kwargs'] = [
+        ['labels', 'mutate_funcs'],
+        ['one', [[subtree_mutation, 0.5]]],
+        # ['two' , [[subtree_mutation, 0.5],[split_mutation, 0.5]]],
+    ]
+
+    # Run simulation
+    all_pops, all_fits = run_sims(**kwargs)
+    save_all(all_pops, all_fits, kwargs)
+    plot_results(all_pops, all_fits, **kwargs)
+
+
+
+
 
     # e = Node('e')
     # i = Node('i')
@@ -363,35 +410,28 @@ if __name__ == '__main__':
     #            result_fitness_func=mse, #correlation,
     #            domains=[[0, 2*np.pi, 31]])
 
-    # Run simulation
-    # all_pops, all_fits = run_sims(**kwargs)
-    # save_all(all_pops, all_fits, kwargs)
-    # plot_results(all_pops, all_fits, **kwargs)
 
-
-
-
-
-
-    x = Node('x')
-
-    f1 = x + 1
-    f2 = f1 - f1.copy()
-    f = f2
-
-    # f1 = x + 1
+    #
+    # x = Node('x')
+    #
+    # # f1 = 1 + x
+    # # f2 = x - f1
+    # # f3 = f1 * f2
+    # # f4 = f2 / f3
+    # # f = f4
+    #
+    # f1 = 1 + x
     # f2 = f1 - x
-    # f3 = f1 * f2
-    # f4 = f3 / f3.copy()
-    # # f4 = f3.copy() / f3.copy()
+    # f3 = f2 * f1
+    # f4 = f3 / f2
     # f = f4
-    # f = f.copy()
+    #
+    # # g1 = x / 1
+    #
+    # # (f1).replace(g1)
+    #
+    # plot_graph(f)
+    # f = split_mutation(f, 1, 2)
+    # plot_graph(f)
 
-    # g1 = x / 1
-
-    # (f[0][0]).replace(g1.copy())
-
-    # f = split_mutation(f, 1, 1)
-
-    plot_graph(f)
 

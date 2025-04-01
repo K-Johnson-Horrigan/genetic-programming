@@ -35,7 +35,7 @@ def plot_min_fit(all_pops, all_fits, title=None, legend_title=None, **kwargs):
     plt.show()
 
 
-def plot_nodes(nodes, result_fitness_func=None, labels=None, title=None, legend_title=None, eval_method=None, **kwargs):
+def plot_nodes(nodes, result_fitness_func=None, labels=None, title=None, legend_title=None, **kwargs):
     """Plot all given nodes and the fitness function"""
     xs = np.linspace(*kwargs['domains'][0])
     # Plot target function if given
@@ -56,7 +56,7 @@ def plot_nodes(nodes, result_fitness_func=None, labels=None, title=None, legend_
         if 'target_func' in kwargs and result_fitness_func is not None:
             label += f' Fitness = {result_fitness_func([node], **kwargs)[0]:f}'
         # node_ys = [node(i) for i in xs]
-        node_ys = [node(i, eval_method=eval_method) for i in xs]
+        node_ys = [node(i, eval_method=kwargs['eval_method']) for i in xs]
         plt.scatter(xs, np.real(node_ys), label=label)
         plt.plot(xs, np.real(node_ys))
         if np.iscomplex(node_ys).any():
@@ -108,168 +108,166 @@ def table_best(all_pops, all_fits, **kwargs):
             print(('f(' + ', '.join(['{}']*len(kwargs['domains'])) + ') = {} | {}').format(*row))
 
 
-# def plot_graph(node, layout=0, theta0=-.5, theta1=.5, r=0, initial=True, verts=None, edges=None, pos=None, verts2=None):
-#     """Plot the node as a tree"""
-#
-#     if initial:
-#         node.reset_index()
-#         edges = [] if initial else edges
-#         verts = [node]
-#         verts2 = [[0]]
-#         pos = [(0,0)]
-#         # index = [index for index,n in enumerate(verts) if n is node][0]
-#
-#     if node.temp_index is None: node.temp_index = len(verts) - 1
-#
-#     theta = theta0 + 0.5 * (theta1 - theta0)
-#
-#     # xx = math.cos(math.pi * 2 * theta) * r
-#     # yy = math.sin(math.pi * 2 * theta) * r
-#
-#     if len(node) > 0:
-#         child_r = r + 1
-#         for i, child in enumerate(node):
-#             # Check if the node already exists in the plot
-#             # sub = [index for index,n in enumerate(verts) if n is child]
-#             # if len(sub) > 0:
-#
-#             # Child has already been iterated over
-#             if child.temp_index is not None:
-#                 edges.append((node.temp_index, child.temp_index))
-#
-#             # Child has not been iterated over
-#             else:
-#                 child.temp_index = len(verts)
-#                 verts.append(child)
-#                 pos.append(None)
-#                 if layout == 1 or layout == 3:
-#                     depth = node.depth()
-#                     while len(verts2) <= depth: verts2.append([])
-#                     verts2[depth].append(child.temp_index)
-#                 # Call recursively
-#                 child_theta0 = theta0 + i / (len(node)) * (theta1 - theta0)
-#                 child_theta1 = theta0 + (i + 1) / (len(node)) * (theta1 - theta0)
-#                 child_theta, child_r = plot_graph(child, layout, child_theta0, child_theta1, child_r, False, verts, edges, pos, verts2)
-#                 if layout == 0:
-#                     child_x = child_theta
-#                     child_y = child_r
-#                 else:
-#                     child_x = math.cos(math.pi * 2 * child_theta) * child_r
-#                     child_y = math.sin(math.pi * 2 * child_theta) * child_r
-#
-#                 # Update position
-#                 pos[child.temp_index] = (child_x, child_y)
-#                 edges.append((node.temp_index, child.temp_index))
-#
-#     if not initial:
-#         return theta, r
-#     else:
-#         # Alternate layout
-#         if layout == 1 or layout == 3:
-#             for r in range(len(verts2)):
-#                 for i in range(len(verts2[r])):
-#                     theta = i / len(verts2[r])
-#                     if layout == 1:
-#                         x = theta
-#                         y = r
-#                     else:
-#                         x = math.cos(math.pi * 2 * theta) * r
-#                         y = math.sin(math.pi * 2 * theta) * r
-#                     pos[verts2[r][i]] = (x, y)
-#
-#         # elif layout == 5:
-#         #     verts, edges = node.to_lists()
-#
-#         # Create networkxs graph
-#         fig, ax = plt.subplots()
-#         G = nx.MultiDiGraph()
-#         G.add_nodes_from(range(len(verts)))
-#         G.add_edges_from(edges)
-#         G.nodes(data=True)
-#
-#         # pos = nx.kamada_kawai_layout(G)
-#         # pos = nx.spring_layout(G)
-#         # pos = nx.spectral_layout(G)
-#         # pos = nx.arf_layout(G)
-#         # pos = nx.planar_layout(G)
-#
-#         nx.draw_networkx_nodes(
-#             G,
-#             pos,
-#             nodelist=range(len(verts)),
-#             node_color='tab:blue',
-#             node_size=600,
-#         )
-#         nx.draw_networkx_labels(
-#             G,
-#             pos,
-#             labels = {key: str(node.value) for key,node in enumerate(verts)},
-#             font_color="whitesmoke",
-#             font_size=10,
-#         )
-#         nx.draw_networkx_edges(
-#             G,
-#             pos,
-#             arrowstyle="->",
-#             arrowsize=20,
-#             # edge_color = range(G.number_of_edges()),
-#             # edge_cmap = plt.cm.gist_rainbow,
-#             width=2,
-#             alpha=0.5,
-#         )
-#         plt.show()
-
-
 def plot_graph(node, layout=0, theta0=-.5, theta1=.5, r=0, initial=True, verts=None, edges=None, pos=None, verts2=None):
     """Plot the node as a tree"""
 
+    if layout==0:
+        simple_plot_graph(node)
+        return
+
+    if initial:
+        node.reset_index()
+        edges = [] if initial else edges
+        verts = [node]
+        verts2 = [[0]]
+        pos = [(0,0)]
+        # index = [index for index,n in enumerate(verts) if n is node][0]
+
+    if node.temp_index is None: node.temp_index = len(verts) - 1
+
+    theta = theta0 + 0.5 * (theta1 - theta0)
+
+    # xx = math.cos(math.pi * 2 * theta) * r
+    # yy = math.sin(math.pi * 2 * theta) * r
+
+    if len(node) > 0:
+        child_r = r + 1
+        for i, child in enumerate(node):
+            # Check if the node already exists in the plot
+            # sub = [index for index,n in enumerate(verts) if n is child]
+            # if len(sub) > 0:
+
+            # Child has already been iterated over
+            if child.temp_index is not None:
+                edges.append((node.temp_index, child.temp_index))
+
+            # Child has not been iterated over
+            else:
+                child.temp_index = len(verts)
+                verts.append(child)
+                pos.append(None)
+                if layout == 2 or layout == 4:
+                    depth = node.depth()
+                    while len(verts2) <= depth: verts2.append([])
+                    verts2[depth].append(child.temp_index)
+                # Call recursively
+                child_theta0 = theta0 + i / (len(node)) * (theta1 - theta0)
+                child_theta1 = theta0 + (i + 1) / (len(node)) * (theta1 - theta0)
+                child_theta, child_r = plot_graph(child, layout, child_theta0, child_theta1, child_r, False, verts, edges, pos, verts2)
+                if layout == 0:
+                    child_x = child_theta
+                    child_y = child_r
+                else:
+                    child_x = math.cos(math.pi * 2 * child_theta) * child_r
+                    child_y = math.sin(math.pi * 2 * child_theta) * child_r
+
+                # Update position
+                pos[child.temp_index] = (child_x, child_y)
+                edges.append((node.temp_index, child.temp_index))
+
+    if not initial:
+        return theta, r
+    else:
+        # Alternate layout
+        if layout == 2 or layout == 4:
+            for r in range(len(verts2)):
+                for i in range(len(verts2[r])):
+                    theta = i / len(verts2[r])
+                    if layout == 1:
+                        x = theta
+                        y = r
+                    else:
+                        x = math.cos(math.pi * 2 * theta) * r
+                        y = math.sin(math.pi * 2 * theta) * r
+                    pos[verts2[r][i]] = (x, y)
+
+        # elif layout == 5:
+        #     verts, edges = node.to_lists()
+
+        # Create networkxs graph
+        fig, ax = plt.subplots()
+        G = nx.MultiDiGraph()
+        G.add_nodes_from(range(len(verts)))
+        G.add_edges_from(edges)
+        G.nodes(data=True)
+
+        # pos = nx.kamada_kawai_layout(G)
+        # pos = nx.spring_layout(G)
+        # pos = nx.spectral_layout(G)
+        # pos = nx.arf_layout(G)
+        # pos = nx.planar_layout(G)
+
+        nx.draw_networkx_nodes(
+            G,
+            pos,
+            nodelist=range(len(verts)),
+            node_color='tab:blue',
+            node_size=600,
+        )
+        nx.draw_networkx_labels(
+            G,
+            pos,
+            labels = {key: str(node.value) for key,node in enumerate(verts)},
+            font_color="whitesmoke",
+            font_size=10,
+        )
+        nx.draw_networkx_edges(
+            G,
+            pos,
+            arrowstyle="->",
+            arrowsize=20,
+            # edge_color = range(G.number_of_edges()),
+            # edge_cmap = plt.cm.gist_rainbow,
+            width=2,
+            alpha=0.5,
+        )
+        plt.show()
+
+
+def simple_plot_graph(node, scale=1):
+    """Plot the node as a tree"""
     node.reset_index()
     verts, edges = node.to_lists()
     nodes = node.nodes()
-
-    # indicies = [n.temp_index for n in nodes]
-
     pos = sorted([(n.temp_index ,n.depth()) for n in nodes])
-    # pos = list(zip(*pos))
 
     # Create networkxs graph
     fig, ax = plt.subplots()
     G = nx.MultiDiGraph()
     G.add_nodes_from(range(len(verts)))
     G.add_edges_from(edges)
-    G.nodes(data=True)
-
     # pos = nx.kamada_kawai_layout(G)
     # pos = nx.spring_layout(G)
     # pos = nx.spectral_layout(G)
     # pos = nx.arf_layout(G)
     # pos = nx.planar_layout(G)
-
     nx.draw_networkx_nodes(
         G,
         pos,
         nodelist=range(len(verts)),
         node_color='tab:blue',
-        node_size=600,
+        node_size=600*scale,
     )
     nx.draw_networkx_labels(
         G,
         pos,
         labels = {key: vert for key,vert in enumerate(verts)},
         font_color="whitesmoke",
-        font_size=10,
+        font_size=10*scale,
     )
     nx.draw_networkx_edges(
         G,
         pos,
         arrowstyle="->",
-        arrowsize=20,
+        arrowsize=20*scale,
         # edge_color = range(G.number_of_edges()),
         # edge_cmap = plt.cm.gist_rainbow,
-        width=2,
+        width=2*scale,
         alpha=0.5,
     )
+    ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
     plt.show()
+
 
 def plot_results(all_pops, all_fits, **kwargs):
     """Plot all standard plots"""
@@ -281,6 +279,6 @@ def plot_results(all_pops, all_fits, **kwargs):
 
 
 if __name__ == '__main__':
-    name = 'logic'
+    name = 'debug'
     all_pops, all_fits, kwargs = load_all(name)
     plot_results(all_pops, all_fits, **kwargs)

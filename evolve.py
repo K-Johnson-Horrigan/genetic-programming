@@ -69,16 +69,23 @@ def next_pop(pop, **kwargs):
             # Selection
             c0, f0 = tournament_selection(**kwargs)
             c1, f1 = tournament_selection(**kwargs)
-            prev_fit = np.mean(kwargs['fitness_func'](pop=[c0,c1], **kwargs))
+            # prev_fit = np.mean(kwargs['fitness_func'](pop=[c0,c1], **kwargs))
+
             # Crossover
             if random.random() < kwargs['p_c']:
                 c0, c1 = kwargs['crossover_func'](c0, c1, **kwargs)
-
-                cc0.prev_fit
+                # cc0.prev_fit
 
             # Mutate children
-            c0 = kwargs['mutate_func'](c0, **kwargs)
-            c1 = kwargs['mutate_func'](c1, **kwargs)
+            a, p = zip(*kwargs['mutate_funcs'])
+            mutate_func = np.random.choice(a=a, p=p)
+
+            if mutate_func is not None:
+                if kwargs['verbose'] > 1:
+                    print(mutate_func.__name__)
+                c0 = mutate_func(c0, **kwargs)
+                c1 = mutate_func(c1, **kwargs)
+
             new_pop.append(c0)
             new_pop.append(c1)
         return new_pop, kwargs['fits']
@@ -86,6 +93,12 @@ def next_pop(pop, **kwargs):
 
 def run_sim(**kwargs):
     """Run a single simulation of a full set of generations"""
+
+    # kwargs['mutate_funcs'] = np.array(kwargs['mutate_funcs'])
+
+    # Add no operation as a possible mutation
+    noop = 1 - sum(list(zip(*kwargs['mutate_funcs']))[1])
+    kwargs['mutate_funcs'].append([None, noop])
 
     # Set random seed
     if 'seed' in kwargs:
