@@ -12,11 +12,12 @@ from math import sin, cos
 
 """Functions relevant to implementing genetic programming"""
 
+
 #
 # Initialization Functions
 #
 
-def random_tree(init_tree_depth, ops=Node.valid_ops, terminals=['x'], p_branch=0.5, init_call=True, **kwargs):
+def random_tree(init_tree_depth, ops=Node.valid_ops, terminals=('x',), p_branch=0.5, init_call=True, **kwargs):
     """Generate a random tree"""
     # Create a branch with an operator value
     if init_call or random.random() < p_branch and init_tree_depth > 0:
@@ -27,9 +28,14 @@ def random_tree(init_tree_depth, ops=Node.valid_ops, terminals=['x'], p_branch=0
     else:
         return Node(random.choice(terminals))
 
-def random_noop_tree(init_tree_depth, ops=Node.valid_ops, terminals=['x'], p_branch=0.5, **kwargs):
-        c = [random_tree(init_tree_depth, ops, terminals, p_branch=0.5, init_call=True, **kwargs) for _ in range(5)]
-        return Node('noop', c)
+
+def random_noop_tree(init_tree_depth, num_registers, ops=Node.valid_ops, terminals=('x',), p_branch=0.5, **kwargs):
+    c = [
+        random_tree(init_tree_depth-1, ops=ops, terminals=terminals, p_branch=p_branch, init_call=True, **kwargs)
+        for _ in range(num_registers)
+    ]
+    return Node('noop', c)
+
 
 #
 # Fitness Functions
@@ -45,12 +51,12 @@ def fitness_helper(id, node, xs, y_target):
 def mse(pop, target_func, domains, **kwargs):
     """Calculate the fitness value of all individuals in a population against the target function for the provided domain"""
     xs = [np.linspace(*domain) for domain in domains]
-    xs = np.array(np.meshgrid(*xs)).reshape((len(xs), -1)).T
-    y_target = np.array([target_func(*list(x)) for x in xs])
-    xs = xs.swapaxes(0, 1)
+    xs = np.array(np.meshgrid(*xs)).reshape((len(xs), -1))
+    y_target = np.array([target_func(*list(x)) for x in xs.T])
+    # xs = xs.swapaxes(0, 1)
     fits = np.empty(len(pop))
     for i,node in enumerate(pop):
-        # y_actual = [node(*x, eval_method=kwargs['eval_method']) for x in xs]
+        # Pass all test cases as a single numpy array so that a semantic vector can be formed if needed
         y_actual = node(*xs, eval_method=kwargs['eval_method'])
         fit = (sum((abs(y_target - y_actual)) ** 2) / len(xs)) ** (1/2)
         fits[i] = fit
@@ -64,13 +70,12 @@ def mse(pop, target_func, domains, **kwargs):
 def correlation(pop, target_func, domains, is_final=False, **kwargs):
     """Calculate the fitness value of all individuals in a population against the target function for the provided domain"""
     xs = [np.linspace(*domain) for domain in domains]
-    xs = np.array(np.meshgrid(*xs)).reshape((len(xs), -1)).T
-    y_target = np.array([target_func(*list(x)) for x in xs])
-    xs = xs.swapaxes(0,1)
+    xs = np.array(np.meshgrid(*xs)).reshape((len(xs), -1))
+    y_target = np.array([target_func(*list(x)) for x in xs.T])
     y_target_mean = np.mean(y_target)
     fits = np.empty(len(pop))
     for i,node in enumerate(pop):
-        # y_actual = np.array([node(*x, eval_method=kwargs['eval_method']) for x in xs])
+        # Pass all test cases as a single numpy array so that a semantic vector can be formed if needed
         y_actual = node(*xs, eval_method=kwargs['eval_method'])
         y_actual_mean = np.mean(y_actual)
         sum_target_actual = sum((y_target - y_target_mean) * np.conjugate(y_actual - y_actual_mean))
@@ -91,129 +96,106 @@ def correlation(pop, target_func, domains, is_final=False, **kwargs):
     return fits
 
 
-# def final_correlation(pop, target_func, domains, **kwargs):
-#     """Calculate the fitness value of all individuals in a population against the target function for the provided domain"""
-#     xs = [np.linspace(*domain) for domain in domains]
-#     xs = np.array(np.meshgrid(*xs)).reshape((len(xs), -1)).T
-#     y_target = np.array([target_func(*list(x)) for x in xs])
-#     xs = xs.swapaxes(0, 1)
-#     y_target_mean = np.mean(y_target)
-#     fits = np.empty(len(pop))
-#     for i,node in enumerate(pop):
-#         # y_actual = np.array([node(*x) for x in xs])
-#         y_actual = node(*xs, eval_method=kwargs['eval_method'])
-#         y_actual_mean = np.mean(y_actual)
-#         sum_target_actual = sum((y_target - y_target_mean) * np.conjugate(y_actual - y_actual_mean))
-#         sum_target_2 = sum(abs((y_target - y_target_mean))**2)
-#         sum_actual_2 = sum(abs((y_actual - y_actual_mean))**2)
-#         R = sum_target_actual / (sum_target_2 * sum_actual_2) ** (1/2)
-#         fit = 1 - R * np.conjugate(R)
-#         fits[i] = fit
-#
-#
-#     # Replace inf and nan to arbitrary large values
-#     fits = np.nan_to_num(fits, nan=np.inf, posinf=np.inf)
-#     return fits
-
 #
 # Mutation Functions
 #
 
-def randomize_mutation(a, **kwargs):
-    """Preform a mutation with a probability of p_m"""
+def randomize_mutation(root, **kwargs):
+    """Return a random new individual"""
     return kwargs['init_individual_func'](**kwargs)
 
-def subtree_mutation(a, **kwargs):
-    """Preform a mutation with a probability of p_m"""
-    # Probability of mutation
-    # if random.random() < p_m:
-    a = a.copy()
-    # List of all nodes with no children
-    a_nodes = [n for n in a.nodes() if len(n) == 0]
-    old_branch = random.choice(a_nodes)
-    if kwargs['verbose'] > 1:
-        old_a = a.copy()
+
+def subtree_mutation(root, **kwargs):
+    """Swap a random node with a random new subtree"""
+    new_root = root.copy()
     new_branch = kwargs['new_individual_func'](**kwargs)
-    new_a = old_branch.replace(new_branch)
+    new_branch_height = new_branch.height()
+    # List of all nodes with no children
+    root_nodes = [
+        n for n in new_root.nodes() if len(n) == 0 and n.depth() + new_branch_height < kwargs['max_tree_depth']
+    ]
+    # Failure occurs if there is no way to insert the new tree
+    if len(root_nodes) == 0:
+        if kwargs['verbose'] > 1:
+            print(f'\tsubtree_mutation: failed for {new_root} and branch {new_branch} of height {new_branch_height}')
+        return new_root
+    # Select and replace a node with the branch
+    branch = random.choice(root_nodes)
+    branch.replace(new_branch)
     if kwargs['verbose'] > 1:
-        print(f'\tsubtree_mutation: {old_a} replaces {old_branch} with {new_branch} returns {new_a}')
-    a = new_a
-    return a
+        print(f'\tsubtree_mutation: {root} replaces {branch} with {new_branch} returns {new_root}')
+    return new_root
 
-# def ancestor_split_mutation(a, p_m, verbose, **kwargs):
-#     """Only the direct parent may """
-#     # Probability of mutation
-#     if random.random() < p_m:
-#         a = a.copy()
-#         # List of all nodes with multiple parents
-#         a_nodes = [n for n in a.nodes() if len(n.parents) > 1]
-#         old_branch = random.choice(a_nodes)
-#         if verbose > 1:
-#             old_a = a.copy()
-#         new_branch = old_branch.copy()
-#         old_branch.replace(new_branch)
-#         a.reset_parents()
-#         a.set_parents()
-#         if verbose > 1:
-#             print(f'\t\tMutation: {old_a} replaces {old_branch} with {new_branch} returns {a}')
-#     return a
-
-def split_mutation(a, **kwargs):
-    """Only the direct parent may """
-    # Probability of mutation
-    # if random.random() < p_m:
-    a = a.copy()
-    # List of all nodes with multiple parents
-    a_nodes = [n for n in a.nodes() if len(n.parents) > 1]
-    # Mutation failed
-    if len(a_nodes) == 0:
-        print(f'\tsplit_mutation: failed for {a}')
-        return a
-
-    node = random.choice(a_nodes)
-    if kwargs['verbose'] > 1:
-        old_a = a.copy()
-    for parent in node.parents:
-        index = node.index_in(parent)
-        new_node = Node(node.value, node.children)
-        parent[index] = new_node
-    a.reset_parents()
-    a.set_parents()
-
-    if kwargs['verbose'] > 1:
-        print(f'\tsplit_mutation: {old_a} splits {node} returns {a}')
-    return a
 
 def pointer_mutation(root, **kwargs):
-    old_root = root
-    root = root.copy()
-    # List of all nodes with multiple parents
-    possible_parents = [n for n in root.nodes() if len(n.parents) > 0 and len(n.children) > 0]
-
-    if len(possible_parents) == 0:
+    """Randomly change an op node to point to a random node that is not an ancestor"""
+    new_root = root.copy()
+    # List of all nodes with parents and children
+    # The root node and terminal nodes cannot have their pointer changed
+    valid_parent_nodes = [n for n in new_root.nodes() if len(n.parents) > 0 and len(n.children) > 0]
+    # Pointer mutations will fail in situations such as if the graph is a path
+    if len(valid_parent_nodes) == 0:
         if kwargs['verbose'] > 1:
-            print(f'\tpointer_mutation: failed for {root}')
-        return root
-
-    parent = random.choice(possible_parents)
-    child_index = np.random.randint(len(parent))
-    child = parent[child_index]
-
-    # descendants = parent.nodes()
-
-    # possible_new_child = [n for n in root.nodes() if n.index_in(descendants) == -1]
-
-    possible_new_child = [n for n in root.nodes() if parent.index_in(n.nodes()) == -1]
-
-    new_child = random.choice(possible_new_child)
-    parent[child_index] = new_child
-
-    root.reset_parents()
-    root.set_parents()
+            print(f'\tpointer_mutation: failed for {new_root}')
+        return new_root
+    # Select a random parent to have its pointer changed
+    parent_node = random.choice(valid_parent_nodes)
+    child_node_index = np.random.randint(len(parent_node))
+    old_child_node = parent_node[child_node_index]
+    # Select a new child
+    new_child_node = random.choice([n for n in new_root.nodes() if parent_node.index_in(n.nodes()) == -1])
+    # Replace the child
+    parent_node[child_node_index] = new_child_node
+    # Recalculate parents
+    new_root.reset_parents()
+    new_root.set_parents()
 
     if kwargs['verbose'] > 1:
-        print(f'\tpointer_mutation: {old_root} replaces {child} with {new_child} returns {root}')
-    return root
+        print(f'\tpointer_mutation: {root} replaces {old_child_node} with {new_child_node} returns {new_root}')
+    return new_root
+
+
+def split_mutation(root, **kwargs):
+    """Only the direct parent may """
+    new_root = root.copy()
+    # List of all nodes with multiple parents
+    valid_child_nodes = [n for n in new_root.nodes() if len(n.parents) > 1]
+    # Mutation failed
+    if len(valid_child_nodes) == 0:
+        print(f'\tsplit_mutation: failed for {new_root}')
+        return new_root
+    child_node = random.choice(valid_child_nodes)
+    # Shallow copy the node for each parent
+    for parent in child_node.parents:
+        parent[child_node.index_in(parent)] = Node(child_node.value, child_node.children)
+    # Recalculate parents
+    new_root.reset_parents()
+    new_root.set_parents()
+    if kwargs['verbose'] > 1:
+        print(f'\tsplit_mutation: {root} splits {child_node} returns {new_root}')
+    return new_root
+
+
+def deep_split_mutation(root, **kwargs):
+    """Only the direct parent may """
+    new_root = root.copy()
+    # List of all nodes with multiple parents
+    valid_child_nodes = [n for n in new_root.nodes() if len(n.parents) > 1]
+    # Mutation failed
+    if len(valid_child_nodes) == 0:
+        print(f'\tsplit_mutation: failed for {new_root}')
+        return new_root
+    child_node = random.choice(valid_child_nodes)
+    # Deep copy the node for each parent
+    for parent_node in child_node.parents:
+        parent_node[child_node.index_in(parent_node)] = child_node.copy()
+    # Recalculate parents
+    new_root.reset_parents()
+    new_root.set_parents()
+    if kwargs['verbose'] > 1:
+        print(f'\tsplit_mutation: {root} splits {child_node} returns {new_root}')
+    return new_root
+
 
 #
 # Crossover Functions
@@ -236,8 +218,14 @@ def subtree_crossover(a, b, **kwargs):
                       and b_height - bn.height() + a_parent_node_height <= kwargs['max_tree_depth']
                       and a_height + bn.height() - a_parent_node_height <= kwargs['max_tree_depth']
                       ]
+
+    if len(b_parent_nodes) == 0:
+        print(f'\tsubtree_crossover: failed between {a} and {b}')
+        return a, b
+
     # Select a random node with children
     b_parent_node = random.choice(b_parent_nodes)
+
     # Swap the two nodes
     a_parent_node.replace(b_parent_node.copy())
     b_parent_node.replace(a_parent_node.copy())
@@ -245,6 +233,7 @@ def subtree_crossover(a, b, **kwargs):
     if kwargs['verbose'] > 1:
         print(f'\tsubtree_crossover: {a} and {b} produce {a_new} and {b_new}')
     return a_new, b_new
+
 
 #
 # Target Functions
@@ -257,6 +246,7 @@ def xor_and_xor(*x): return (int(x[0]) ^ int(x[1])) & (int(x[2]) ^ int(x[3]))
 # def const_32(x): return x**5 + 32*x**3 + x
 def const_32(x): return 32*x**2 + x
 
+
 #
 # Initial pops
 #
@@ -268,16 +258,44 @@ def init_indiv(**kwargs):
     f = f.limited()
     return f
 
-def init_sin(**kwargs): return Node.sin(Node('x')).limited()
+def init_sin(**kwargs): return Node.sin(Node('x'))
+def init_sin_limited(**kwargs): return Node.sin(Node('x')).limited()
 
 #
 # Debug
 #
 
 if __name__ == '__main__':
-    e = Node('e')
-    i = Node('i')
-    x = Node('x')
+
+    # pass
+    # f0 = x + 1
+    # f1 = f0 + x
+    # f2 = f1 + f0
+    # f = f2
+    #
+    g = x + 1
+    f = g + g
+
+    # f = random_noop_tree(3,5, ['+','-','*','/','**'],['x'],1)
+
+    # plot_graph(f)
+
+    f = subtree_mutation(
+        f,
+        verbose=2,
+        max_tree_depth=5,
+        new_individual_func=random_tree,
+        init_tree_depth=2,
+        ops=['+','-','*','/','**']
+    )
+
+    plot_graph(f)
+
+    # f = pointer_mutation(f, verbose=2)
+    # f =
+    # plot_graph(split_mutation(f, verbose=2))
+    # plot_graph(deep_split_mutation(f, verbose=2))
+
     # f = e ** (i * x)
     # # f = Node.sin(x)
     # # f = 3j * (x * i + 3j)

@@ -43,7 +43,7 @@ def plot_nodes(nodes, result_fitness_func=None, labels=None, title=None, legend_
             plt.plot(xs, np.imag(node_ys), ':')
 
     plt.title(title)
-    plt.legend(title=legend_title)
+    plt.legend(title=kwargs['test_kwargs'][0][0])
     plt.show()
 
 
@@ -69,7 +69,7 @@ def plot_min_fit(all_pops, all_fits, title=None, legend_title=None, **kwargs):
     # ax.set_yscale('log')
     plt.xlabel('Generation')
     plt.ylabel('Min Fitness Value')
-    plt.legend(title=legend_title)
+    plt.legend(title=kwargs['test_kwargs'][0][0])
     plt.show()
 
 
@@ -84,7 +84,7 @@ def plot_size(all_pops, all_fits, legend_title=None, **kwargs):
     # ax.set_yscale('log')
     plt.xlabel('Generation')
     plt.ylabel('Number of Nodes')
-    plt.legend(title=legend_title)
+    plt.legend(title=kwargs['test_kwargs'][0][0])
     plt.show()
 
 
@@ -102,7 +102,7 @@ def plot_quality_gain(all_pops, all_fits, legend_title=None, **kwargs):
     # plt.gca().set_yscale('log')
     plt.xlabel('Generation')
     plt.ylabel('Quality Gain')
-    plt.legend(title=legend_title)
+    plt.legend(title=kwargs['test_kwargs'][0][0])
     plt.show()
 
 
@@ -119,7 +119,7 @@ def plot_success_rate(all_pops, all_fits, legend_title=None, **kwargs):
         plt.plot(xs, ys, label=label)
     plt.xlabel('Generation')
     plt.ylabel('Success Rate')
-    plt.legend(title=legend_title)
+    plt.legend(title=kwargs['test_kwargs'][0][0])
     plt.show()
 
 
@@ -133,7 +133,7 @@ def plot_effective(all_pops, all_fits, legend_title=None, **kwargs):
         plt.plot(xs, ys, label=label)
     plt.xlabel('Generation')
     plt.ylabel('% Active Nodes')
-    plt.legend(title=legend_title)
+    plt.legend(title=kwargs['test_kwargs'][0][0])
     plt.show()
 
 
@@ -150,8 +150,9 @@ def plot_noop_size(all_pops, all_fits, legend_title=None, **kwargs):
         plt.plot(xs, ys, label=label)
     plt.xlabel('Generation')
     plt.ylabel('% No-Op Traversed Nodes')
-    plt.legend(title=legend_title)
+    plt.legend(title=kwargs['test_kwargs'][0][0])
     plt.show()
+
 
 #
 # Tables
@@ -338,24 +339,27 @@ def plot_graph(node, scale=1, title=None, suptitle=None, **kwargs):
 
     # suptitle = f'${node.latex()}$'
     # title, suptitle = suptitle, title
+    # plt.suptitle(suptitle)
     ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
     plt.title(title)
-    # plt.suptitle(suptitle)
-    plt.legend(title=f'Fitness = {kwargs['result_fitness_func']([node], **kwargs)[0]}')
+    if 'result_fitness_func' in kwargs:
+        plt.legend(title=f'Fitness = {kwargs['result_fitness_func']([node], **kwargs)[0]}')
+    plt.xlabel('Traversal Order')
+    plt.ylabel('Depth')
     plt.show()
+
 
 #
 # Control
 #
 
 def get_best(all_pops, all_fits, gen=-1, **kwargs):
-    """Plot the best result of the given run and gen"""
+    """Get the best result of the given run and gen"""
     nodes = []
     # Iterate over all runs
     for run in range(all_pops.shape[0]):
         i = all_fits[run,slice(None),gen,:].argmin()
         node = all_pops[run,slice(None),gen,:].flatten()[i]
-        # fit = all_fits[run,slice(None),gen,:].flatten()[i]
         nodes.append(node)
     return nodes
 
@@ -363,29 +367,29 @@ def get_best(all_pops, all_fits, gen=-1, **kwargs):
 def plot_results(all_pops, all_fits, **kwargs):
     """Plot all standard plots"""
 
-    plot_noop_size(all_pops, all_fits, **kwargs)
-    # plot_quality_gain(all_pops, all_fits, **kwargs)
-    # plot_success_rate(all_pops, all_fits, **kwargs)
-    # plot_size(all_pops, all_fits, **kwargs)
-    # plot_effective(all_pops, all_fits, **kwargs)
-    # plot_min_fit(all_pops, all_fits, title='', **kwargs)
+    plot_min_fit(all_pops, all_fits, title='', **kwargs)
 
     # Plot best
     best = get_best(all_pops, all_fits, **kwargs)
     plot_nodes(best, **kwargs)
-    for i, node in enumerate(best):
-        title = 'Best Graph (' + kwargs['test_kwargs'][i + 1][0] + ')'
-        plot_graph(node, title=title, **kwargs)
+
+    plot_size(all_pops, all_fits, **kwargs)
+    plot_quality_gain(all_pops, all_fits, **kwargs)
+    plot_success_rate(all_pops, all_fits, **kwargs)
+    plot_effective(all_pops, all_fits, **kwargs)
+    # plot_noop_size(all_pops, all_fits, **kwargs)
 
 
-    # if len(kwargs['domains']) == 1:
-    #     plot_best(all_pops, all_fits, title='Best Overall', **kwargs)
-    # else:
-    #     table_best(all_pops, all_fits, title='Best Overall', **kwargs)
+    if len(kwargs['domains']) == 1:
+        for i, node in enumerate(best):
+            title = 'Best Graph (' + kwargs['test_kwargs'][i + 1][0] + ')'
+            plot_graph(node, title=title, **kwargs)
+    else:
+        table_best(all_pops, all_fits, title='Best Overall', **kwargs)
 
 
 
 if __name__ == '__main__':
-    name = 'HA3.3.1'
+    name = 'tuning'
     all_pops, all_fits, kwargs = load_all(name)
     plot_results(all_pops, all_fits, **kwargs)

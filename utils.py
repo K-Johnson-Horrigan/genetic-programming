@@ -4,7 +4,6 @@ import os
 import numpy as np
 
 
-
 def save_all(all_pops, all_fits, kwargs):
 
     def func_to_string(obj):

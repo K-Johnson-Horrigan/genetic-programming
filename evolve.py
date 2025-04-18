@@ -49,7 +49,7 @@ def next_pop(pop, **kwargs):
         pool_indices = np.array(sorted(pool_indices))
         pool_indices = pool_indices[:kwargs['pop_size'], 1]
         pool_indices = list(pool_indices)
-        # Reduce size
+        # Reduce reps
         new_pop = np.array(pool)[pool_indices]
         kwargs['fits'] = np.array(pool_fits)[pool_indices]
         if kwargs['verbose'] > 1: print(pop)
@@ -64,7 +64,7 @@ def next_pop(pop, **kwargs):
         pool = [(kwargs['fits'][i], i) for i in range(kwargs['pop_size'])]
         pool = sorted(pool)
         new_pop = [pop[pool[i][1]] for i in range(kwargs['keep_parents'])]
-        # Repeat until the new population is the same size as the old
+        # Repeat until the new population is the same reps as the old
         while len(new_pop) < len(pop):
             # Selection
             c0, f0 = tournament_selection(**kwargs)
