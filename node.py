@@ -8,8 +8,6 @@ import sympy as sp
 from numpy.ma.core import ones_like
 from numpy.random import permutation
 
-from plot import plot_effective, plot_graph
-
 
 class Node:
     """A basic class for genetic programming. A Node holds a single value and points to zero or more children Nodes."""

@@ -390,6 +390,6 @@ def plot_results(all_pops, all_fits, **kwargs):
 
 
 if __name__ == '__main__':
-    name = 'tuning'
+    name = 'noop'
     all_pops, all_fits, kwargs = load_all(name)
     plot_results(all_pops, all_fits, **kwargs)
