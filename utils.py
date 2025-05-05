@@ -84,14 +84,14 @@ def load_all(name):
 
     # Save each desired attribute to its own array
     all_pops = np.empty_like(all_verts)
-    for test in range(all_pops.shape[0]):
-        for run in range(all_pops.shape[1]):
-            for gen in range(all_pops.shape[2]):
-                for indiv in range(all_pops.shape[3]):
-                    node = Node.from_lists(all_verts[test, run, gen, indiv], all_edges[test, run, gen, indiv])
-                    node.returned_value = all_returned_values[test, run, gen, indiv]
-                    node.prev_fit = all_prev_fits[test, run, gen, indiv]
-                    all_pops[test, run, gen, indiv] = node
+    # for test in range(all_pops.shape[0]):
+    #     for run in range(all_pops.shape[1]):
+    #         for gen in range(all_pops.shape[2]):
+    #             for indiv in range(all_pops.shape[3]):
+    #                 node = Node.from_lists(all_verts[test, run, gen, indiv], all_edges[test, run, gen, indiv])
+    #                 node.returned_value = all_returned_values[test, run, gen, indiv]
+    #                 node.prev_fit = all_prev_fits[test, run, gen, indiv]
+    #                 all_pops[test, run, gen, indiv] = node
 
     print('Finished Loading')
     return all_pops, all_fits, kwargs

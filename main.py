@@ -8,48 +8,50 @@ from gp import *
 
 if __name__ == '__main__':
 
-    kwargs = {
-        'name': 'sin_to_tan',
-        'seed': None,
-        'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates
-        'num_reps': 10,
-        'num_gens': 100,
-        'pop_size': 100,
-        'max_tree_depth': 10,
-        'max_subtree_depth': 4,
-        'eval_method': None,
-        'new_individual_func': random_tree, # Function used to generate new branches
-        # 'init_individual_func': random_tree, # Function used to generate the initial population
-        'p_branch': 0.5, # Probability of a node branching
-        'terminals': ['x'],
-        'ops': ['+','-','*','/','**'],
-        'init_tree_depth': 4,
-        'target_func': tan,
-        # 'fitness_func': correlation,
-        'fitness_func': mse,
-        'result_fitness_func': mse, # Fitness to compare results
-        'domains': [[-1*np.pi, 1*np.pi, 31]],  # The domain of the problem expressed using np.linspace
-        'crossover_func': subtree_crossover,
-        'k': 2, # Number of randomly chosen parents for each tournament
-        # 'p_c': 0.2, # Probability of crossover
-        'keep_parents': 2, # Elitism, must be even
-        # 'mutate_funcs': [
-        #     [subtree_mutation, 0.3],
-        #     [pointer_mutation, 0.3],
-        # ],
-        'test_kwargs': [
-            ['Initial Population', 'init_individual_func', 'terminals'       , 'p_c', 'mutate_funcs'                                                      , ],
-            ['Random Trees'      , random_tree           , ['x','pi','e','i'], 0.6  , [[point_mutation,0.3],[subtree_mutation,0.3],[pointer_mutation,0.3]], ],
-            ['Sin'               , init_sin              , ['x','pi','e','i'], 0.6  , [[point_mutation,0.3],[subtree_mutation,0.3],[pointer_mutation,0.3]], ],
-            ['Limited Sin'       , init_sin_limited      , ['x','pi','e','i'], 0.6  , [[point_mutation,0.3],[subtree_mutation,0.3],[pointer_mutation,0.3]], ],
-        ],
-        # 'test_kwargs': [
-        #     ['Initial Population', 'init_individual_func', 'terminals'       , 'p_c', 'mutate_funcs'                                                      , ],
-        #     ['Random Trees'      , random_tree           , ['x'], 0.6  , [[point_mutation,0.3],[subtree_mutation,0.3],[pointer_mutation,0.3]], ],
-        #     ['Sin'               , init_sin              , ['x'], 0.6  , [[point_mutation,0.3],[subtree_mutation,0.3],[pointer_mutation,0.3]], ],
-        #     ['Limited Sin'       , init_sin_limited      , ['x'], 0.0  , [[point_mutation,0.3],[subtree_mutation,0.3],[pointer_mutation,0.3]], ],
-        # ],
-    }
+    
+
+    # kwargs = {
+    #     'name': 'sin_to_tan',
+    #     'seed': None,
+    #     'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates
+    #     'num_reps': 10,
+    #     'num_gens': 100,
+    #     'pop_size': 100,
+    #     'max_tree_depth': 10,
+    #     'max_subtree_depth': 4,
+    #     'eval_method': None,
+    #     'new_individual_func': random_tree, # Function used to generate new branches
+    #     # 'init_individual_func': random_tree, # Function used to generate the initial population
+    #     'p_branch': 0.5, # Probability of a node branching
+    #     'terminals': ['x'],
+    #     'ops': ['+','-','*','/','**'],
+    #     'init_tree_depth': 4,
+    #     'target_func': tan,
+    #     # 'fitness_func': correlation,
+    #     'fitness_func': mse,
+    #     'result_fitness_func': mse, # Fitness to compare results
+    #     'domains': [[-1*np.pi, 1*np.pi, 31]],  # The domain of the problem expressed using np.linspace
+    #     'crossover_func': subtree_crossover,
+    #     'k': 2, # Number of randomly chosen parents for each tournament
+    #     # 'p_c': 0.2, # Probability of crossover
+    #     'keep_parents': 2, # Elitism, must be even
+    #     # 'mutate_funcs': [
+    #     #     [subtree_mutation, 0.3],
+    #     #     [pointer_mutation, 0.3],
+    #     # ],
+    #     'test_kwargs': [
+    #         ['Initial Population', 'init_individual_func', 'terminals'       , 'p_c', 'mutate_funcs'                                                      , ],
+    #         ['Random Trees'      , random_tree           , ['x','pi','e','i'], 0.6  , [[point_mutation,0.3],[subtree_mutation,0.3],[pointer_mutation,0.3]], ],
+    #         ['Sin'               , init_sin              , ['x','pi','e','i'], 0.6  , [[point_mutation,0.3],[subtree_mutation,0.3],[pointer_mutation,0.3]], ],
+    #         ['Limited Sin'       , init_sin_limited      , ['x','pi','e','i'], 0.6  , [[point_mutation,0.3],[subtree_mutation,0.3],[pointer_mutation,0.3]], ],
+    #     ],
+    #     # 'test_kwargs': [
+    #     #     ['Initial Population', 'init_individual_func', 'terminals'       , 'p_c', 'mutate_funcs'                                                      , ],
+    #     #     ['Random Trees'      , random_tree           , ['x'], 0.6  , [[point_mutation,0.3],[subtree_mutation,0.3],[pointer_mutation,0.3]], ],
+    #     #     ['Sin'               , init_sin              , ['x'], 0.6  , [[point_mutation,0.3],[subtree_mutation,0.3],[pointer_mutation,0.3]], ],
+    #     #     ['Limited Sin'       , init_sin_limited      , ['x'], 0.0  , [[point_mutation,0.3],[subtree_mutation,0.3],[pointer_mutation,0.3]], ],
+    #     # ],
+    # }
 
     # kwargs = {
     #     'name': 'cos',

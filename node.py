@@ -2,6 +2,7 @@ import math
 import numpy as np
 import sympy as sp
 
+# from plot import plot_graph
 
 
 class Node:
@@ -574,7 +575,7 @@ if __name__ == '__main__':
 
 
     # FIXME ???
-    # f = Node.cos(x).to_tree()
+    f = Node.cos(x).to_tree()
     # f = Node(-1) ** (Node(1) / Node(2))
 
     # f = Node(-1) ** Node(1)
@@ -582,11 +583,14 @@ if __name__ == '__main__':
     f = Node.cos(x) / Node.sin(x)
     # f = (e ** (i * x) + e**(-i*x))/2
 
-    print(f.height())
-    print(f.simplify())
+    # print(f.height())
+    # print(f.simplify())
     l = f.limited(not False)
-    print(l.height())
-    print(l.simplify())
+
+    plot_graph(l)
+
+    # print(l.height())
+    # print(l.simplify())
 
     # f = (x-y)/x
 

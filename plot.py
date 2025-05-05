@@ -402,6 +402,6 @@ def plot_results(all_pops, all_fits, **kwargs):
 
 
 if __name__ == '__main__':
-    name = 'bit_sum'
+    name = 'sin_to_tan'
     all_pops, all_fits, kwargs = load_all(name)
     plot_results(all_pops, all_fits, **kwargs)
