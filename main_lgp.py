@@ -11,7 +11,7 @@ if __name__ == '__main__':
     #     'name': 'noop',
     #     'seed': None,
     #     'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates
-    #     'num_reps': 1,
+    #     'num_runs': 1,
     #     'num_gens': 300,
     #     'pop_size': 100,
     #     'max_tree_depth': 10,
@@ -66,7 +66,7 @@ if __name__ == '__main__':
     #     'name': 'registers_redo',
     #     'seed': None,
     #     'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates
-    #     'num_reps': 1,
+    #     'num_runs': 1,
     #     'num_gens': 300,
     #     'pop_size': 300,
     #     'max_tree_depth': 10,
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     #     'name': 'noop4',
     #     'seed': None,
     #     'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates
-    #     'num_reps': 5,
+    #     'num_runs': 5,
     #     'num_gens': 300,
     #     'pop_size': 200,
     #     'max_tree_depth': 10,
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     #     'name': 'noop5',
     #     'seed': None,
     #     'verbose': 1,  # 0: no updates, 1: generation updates, 2: all updates
-    #     'num_reps': 5,
+    #     'num_runs': 5,
     #     'num_gens': 300,
     #     'pop_size': 200,
     #     'max_tree_depth': 10,
@@ -222,7 +222,7 @@ if __name__ == '__main__':
         'name': 'registers1',
         'seed': None,
         'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates
-        'num_reps': 10,
+        'num_runs': 10,
         'num_gens': 200,
         'pop_size': 100,
         'max_tree_depth': 10,
@@ -285,6 +285,6 @@ if __name__ == '__main__':
 
 
     # Run simulation, save, then plot
-    all_pops, all_fits = run_sims(**kwargs)
+    all_pops, all_fits = simulate_tests(**kwargs)
     save_all(all_pops, all_fits, kwargs)
     plot_results(all_pops, all_fits, **kwargs)

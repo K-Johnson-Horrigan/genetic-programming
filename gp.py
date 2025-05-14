@@ -12,6 +12,13 @@ from math import sin, cos, tan
 
 """Functions relevant to implementing genetic programming"""
 
+def choice(arr, rng):
+    """
+    Return a random element of the given array without casting.
+    This exists to simplify code.
+    See: https://github.com/numpy/numpy/issues/10791
+    """
+    return arr[rng.choice(len(arr))]
 
 #
 # Initialization Functions
@@ -20,13 +27,14 @@ from math import sin, cos, tan
 def random_tree(init_tree_depth, ops=Node.valid_ops, terminals=('x',), p_branch=0.5, init_call=True, **kwargs):
     """Generate a random tree"""
     # Create a branch with an operator value
-    if init_call or random.random() < p_branch and init_tree_depth > 0:
-        op = random.choice(ops)
-        children = [random_tree(init_tree_depth - 1, ops, terminals, p_branch, False) for _ in range(Node.valid_ops[op])]
+    if init_call or kwargs['rng'].random() < p_branch and init_tree_depth > 0:
+        # Prevent the casting of str into numpy str
+        op = choice(ops, kwargs['rng'])
+        children = [random_tree(init_tree_depth - 1, ops, terminals, p_branch, False, **kwargs) for _ in range(Node.valid_ops[op])]
         return Node(op, children)
     # Create a leaf
     else:
-        return Node(random.choice(terminals))
+        return Node(choice(terminals, kwargs['rng']))
 
 
 def random_noop_tree(init_tree_depth, num_registers, ops=Node.valid_ops, terminals=('x',), p_branch=0.5, **kwargs):
@@ -121,7 +129,7 @@ def point_mutation(root, **kwargs):
             print(f'\tpoint_mutation: failed for {new_root}')
         return new_root
 
-    node = random.choice(valid_nodes)
+    node = choice(valid_nodes, **kwargs)
     num_agrs = Node.valid_ops[node.value]
     valid_ops = [op for op in kwargs['ops'] if op != node.value and Node.valid_ops[op] == num_agrs]
 
@@ -130,7 +138,8 @@ def point_mutation(root, **kwargs):
             print(f'\tpoint_mutation: failed for {new_root} on {node.value}')
         return new_root
 
-    new_value = random.choice(valid_ops)
+    # Prevent the casting of str into numpy str
+    new_value = choice(valid_ops, **kwargs)
 
     if kwargs['verbose'] > 1:
         print(f'\tpoint_mutation: {root} replaces a {node.value} with a {new_value} returns {new_root}')
@@ -154,7 +163,7 @@ def subtree_mutation(root, **kwargs):
             print(f'\tsubtree_mutation: failed for {new_root} and branch {new_branch} of height {new_branch_height}')
         return new_root
     # Select and replace a node with the branch
-    branch = random.choice(root_nodes)
+    branch = choice(root_nodes, kwargs['rng'])
     branch.replace(new_branch)
     if kwargs['verbose'] > 1:
         print(f'\tsubtree_mutation: {root} replaces {branch} with {new_branch} returns {new_root}')
@@ -175,11 +184,11 @@ def pointer_mutation(root, **kwargs):
             print(f'\tpointer_mutation: failed for {new_root}')
         return new_root
     # Select a random parent to have its pointer changed
-    parent_node = random.choice(valid_parent_nodes)
-    child_node_index = np.random.randint(len(parent_node))
+    parent_node = choice(valid_parent_nodes, kwargs['rng'])
+    child_node_index = kwargs['rng'].integers(len(parent_node))
     old_child_node = parent_node[child_node_index]
     # Select a new child
-    new_child_node = random.choice([n for n in new_root.nodes() if parent_node.index_in(n.nodes()) == -1])
+    new_child_node = choice([n for n in new_root.nodes() if parent_node.index_in(n.nodes()) == -1], kwargs['rng'])
     # Replace the child
     parent_node[child_node_index] = new_child_node
     # Recalculate parents
@@ -200,7 +209,7 @@ def split_mutation(root, **kwargs):
     if len(valid_child_nodes) == 0:
         print(f'\tsplit_mutation: failed for {new_root}')
         return new_root
-    child_node = random.choice(valid_child_nodes)
+    child_node = choice(valid_child_nodes, kwargs['rng'])
     # Shallow copy the node for each parent
     for parent in child_node.parents:
         parent[child_node.index_in(parent)] = Node(child_node.value, child_node.children)
@@ -221,7 +230,7 @@ def deep_split_mutation(root, **kwargs):
     if len(valid_child_nodes) == 0:
         print(f'\tsplit_mutation: failed for {new_root}')
         return new_root
-    child_node = random.choice(valid_child_nodes)
+    child_node = choice(valid_child_nodes, kwargs['rng'])
     # Deep copy the node for each parent
     for parent_node in child_node.parents:
         parent_node[child_node.index_in(parent_node)] = child_node.copy()
@@ -248,7 +257,7 @@ def subtree_crossover(a, b, **kwargs):
             and an.height() <= kwargs['max_subtree_depth']
     ]
     # Select the first random node (branch)
-    a_subtree = random.choice(valid_a_subtrees)
+    a_subtree = choice(valid_a_subtrees, kwargs['rng'])
     a_subtree_depth = a_subtree.depth()
     a_subtree_height = a_subtree.height()
     # List of all nodes that could swap with a without being too long
@@ -268,7 +277,7 @@ def subtree_crossover(a, b, **kwargs):
         return a, b
 
     # Select a random node with children
-    b_subtree = random.choice(valid_b_subtrees)
+    b_subtree = choice(valid_b_subtrees, kwargs['rng'])
 
     # Swap the two nodes
     a_subtree.replace(b_subtree.copy())

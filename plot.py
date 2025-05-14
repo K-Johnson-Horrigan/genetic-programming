@@ -1,8 +1,11 @@
+import os
+
 import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt
 
-from utils import load_all
+from node import Node
+from utils import load_all, load_kwargs, load_runs
 
 
 # All functions relevant to saving, loading, and plotting.
@@ -77,16 +80,14 @@ def plot_min_fit(all_pops, all_fits, title=None, legend_title=None, **kwargs):
 
 
 def plot_size(all_pops, all_fits, legend_title=None, **kwargs):
-    non_effective_code = np.vectorize(lambda x: len(x.nodes()))(all_pops)
-    # non_effective_code[abs(non_effective_code) > 1e100] = 0
+    graph_size = np.vectorize(lambda x: len(x[0]))(all_pops)
     for test in range(all_fits.shape[0]):
         label = kwargs['test_kwargs'][test + 1][0]
-        ys = np.mean(non_effective_code[test], axis=(0,2))
+        ys = np.mean(graph_size[test], axis=(0,2))
         xs = np.array(range(all_fits.shape[2]))
         plt.plot(xs, ys, label=label)
-    # ax.set_yscale('log')
     plt.xlabel('Generation')
-    plt.ylabel('Number of Nodes')
+    plt.ylabel('Average Number of Nodes')
     plt.legend(title=kwargs['test_kwargs'][0][0])
     plt.savefig(f'saves/{kwargs["name"]}/plots/Size.png')
     plt.show()
@@ -303,7 +304,7 @@ def table_best(all_pops, all_fits, **kwargs):
 #         plt.show()
 
 
-def plot_graph(node, scale=1, title=None, suptitle=None, **kwargs):
+def plot_graph(node, scale=1, title=None, **kwargs):
     """Plot the node as a tree"""
     node.reset_index()
     verts, edges = node.to_lists()
@@ -315,11 +316,6 @@ def plot_graph(node, scale=1, title=None, suptitle=None, **kwargs):
     G = nx.MultiDiGraph()
     G.add_nodes_from(range(len(verts)))
     G.add_edges_from(edges)
-    # pos = nx.kamada_kawai_layout(G)
-    # pos = nx.spring_layout(G)
-    # pos = nx.spectral_layout(G)
-    # pos = nx.arf_layout(G)
-    # pos = nx.planar_layout(G)
     nx.draw_networkx_nodes(
         G,
         pos,
@@ -345,10 +341,7 @@ def plot_graph(node, scale=1, title=None, suptitle=None, **kwargs):
         alpha=0.5,
     )
 
-    suptitle = f'${node.latex()}$'
-    # title, suptitle = suptitle, title
-    plt.suptitle(suptitle)
-
+    plt.suptitle(f'${node.latex()}$')
     ax.tick_params(left=True, bottom=True, labelleft=True, labelbottom=True)
     plt.title(title)
     if 'result_fitness_func' in kwargs:
@@ -370,15 +363,16 @@ def get_best(all_pops, all_fits, gen=-1, **kwargs):
     for run in range(all_pops.shape[0]):
         i = all_fits[run,slice(None),gen,:].argmin()
         node = all_pops[run,slice(None),gen,:].flatten()[i]
-        nodes.append(node)
+        nodes.append(Node.from_lists(*node))
     return nodes
 
 
 def plot_results(all_pops, all_fits, **kwargs):
     """Plot all standard plots"""
-
+    path = f'saves/{kwargs["name"]}/plots/'
+    os.makedirs(path, exist_ok=True)
     print('Plotting results')
-    plot_min_fit(all_pops, all_fits, title='', **kwargs)
+    # plot_min_fit(all_pops, all_fits, title='', **kwargs)
 
     # Plot best
     best = get_best(all_pops, all_fits, **kwargs)
@@ -386,7 +380,6 @@ def plot_results(all_pops, all_fits, **kwargs):
         plot_nodes(best, **kwargs)
     else:
         table_best(all_pops, all_fits, title='Best Overall', **kwargs)
-
 
     plot_size(all_pops, all_fits, **kwargs)
     # plot_quality_gain(all_pops, all_fits, **kwargs)
@@ -402,6 +395,10 @@ def plot_results(all_pops, all_fits, **kwargs):
 
 
 if __name__ == '__main__':
-    name = 'sin_to_tan'
-    all_pops, all_fits, kwargs = load_all(name)
-    plot_results(all_pops, all_fits, **kwargs)
+    # name = 'sin_to_tan'
+    # all_pops, all_fits, kwargs = load_all(name)
+    # plot_results(all_pops, all_fits, **kwargs)
+
+    kwargs = load_kwargs('debug')
+    pops, fits = load_runs(**kwargs)
+    plot_results(pops, fits, **kwargs)

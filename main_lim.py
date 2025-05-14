@@ -12,7 +12,7 @@ if __name__ == '__main__':
     #     'name': 'sin_to_tan',
     #     'seed': None,
     #     'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates
-    #     'num_reps': 10,
+    #     'num_runs': 10,
     #     'num_gens': 100,
     #     'pop_size': 1000,
     #     'max_tree_depth': 10,
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     #     'name': 'cos',
     #     'seed': None,
     #     'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates
-    #     'num_reps': 1,
+    #     'num_runs': 1,
     #     'num_gens': 10,
     #     'pop_size': 60,
     #     'max_tree_depth': 200,
@@ -92,7 +92,7 @@ if __name__ == '__main__':
     #     'name': 'tuning2',
     #     'seed': None,
     #     'verbose': 1,  # 0: no updates, 1: generation updates, 2: all updates
-    #     'num_reps': 4,
+    #     'num_runs': 4,
     #     'num_gens': 200,
     #     'pop_size': 100,
     #     'max_tree_depth': 10,
@@ -142,7 +142,7 @@ if __name__ == '__main__':
     #     'name': 'noop',
     #     'seed': None,
     #     'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates
-    #     'num_reps': 1,
+    #     'num_runs': 1,
     #     'num_gens': 100,
     #     'pop_size': 100,
     #     'max_tree_depth': 10,
@@ -198,7 +198,7 @@ if __name__ == '__main__':
     #     'name': 'sin_to_cos_tuning',
     #     'seed': None,
     #     'verbose': 1,  # 0: no updates, 1: generation updates, 2: all updates
-    #     'num_reps': 4,
+    #     'num_runs': 4,
     #     'num_gens': 200,
     #     'pop_size': 100,
     #     'max_tree_depth': 10,
@@ -247,7 +247,7 @@ if __name__ == '__main__':
     #     'name': 'sin_to_tan_test',
     #     'seed': None,
     #     'verbose': 1,  # 0: no updates, 1: generation updates, 2: all updates
-    #     'num_reps': 1,
+    #     'num_runs': 1,
     #     'num_gens': 100,
     #     'pop_size': 1000,
     #     'max_tree_depth': 10,
@@ -297,7 +297,7 @@ if __name__ == '__main__':
         'name': 'bit_sum',
         'seed': None,
         'verbose': 1,  # 0: no updates, 1: generation updates, 2: all updates
-        'num_reps': 10,
+        'num_runs': 10,
         'num_gens': 50,
         'pop_size': 500,
         'max_tree_depth': 23,
@@ -335,6 +335,6 @@ if __name__ == '__main__':
 
 
     # Run simulation, save, then plot
-    all_pops, all_fits = run_sims(**kwargs)
+    all_pops, all_fits = simulate_tests(**kwargs)
     save_all(all_pops, all_fits, kwargs)
     plot_results(all_pops, all_fits, **kwargs)
