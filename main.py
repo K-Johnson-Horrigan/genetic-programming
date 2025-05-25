@@ -3,43 +3,83 @@ from gp import *
 
 if __name__ == '__main__':
 
+    # kwargs = {
+    #     'name': 'debug',
+    #     'seed': None,
+    #     'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates, 3:
+    #     'num_runs': 2,
+    #     'num_gens': 100,
+    #     'pop_size': 100,
+    #     'max_height': 10, # The maximum height
+    #     # Initialization
+    #     'init_individual_func': random_tree, # Function used to generate the initial population
+    #     'init_max_height': 4,
+    #     'p_branch': 0.5, # Probability of a node branching
+    #     'terminals': ['x'],
+    #     'ops': ['+','-','*','/','**'],
+    #     # Evaluation
+    #     'eval_method': None,
+    #     'target_func': koza_3,
+    #     'fitness_func': mse,
+    #     'result_fitness_func': mse, # Fitness to compare results
+    #     'domains': [[-1, 1, 50]],  # The domain of each variable expressed using np.linspace
+    #     'crossover_func': subgraph_crossover,
+    #     # Selection
+    #     'keep_parents': 2, # Elitism, must be even
+    #     'k': 2, # Number of randomly chosen parents for each tournament
+    #     # Repopulation
+    #     'subgraph_max_height': 4,
+    #     'new_individual_func': random_tree, # Function used to generate new branches used by mutations
+    #     'p_c': 0.2, # Probability of crossover
+    #     'mutate_funcs': [
+    #         [subgraph_mutation, 0.3],
+    #         [pointer_mutation, 0.3],
+    #     ],
+    #     # Tests
+    #     'test_kwargs': [
+    #         ['Initial Population', 'terminals',],
+    #         ['Variable Only', ['x'],],
+    #         ['With Constants', ['x']+list(range(-5,6)),],
+    #     ],
+    # }
+
     kwargs = {
         'name': 'debug',
         'seed': None,
-        'verbose': 1, # 0: no updates, 1: generation updates, 2: all updates, 3:
+        'verbose': 1,  # 0: no updates, 1: generation updates, 2: all updates, 3:
         'num_runs': 2,
         'num_gens': 100,
         'pop_size': 100,
-        'max_height': 10, # The maximum height
+        'max_height': 10,  # The maximum height
         # Initialization
-        'init_individual_func': random_tree, # Function used to generate the initial population
+        'init_individual_func': random_tree,  # Function used to generate the initial population
         'init_max_height': 4,
-        'p_branch': 0.5, # Probability of a node branching
+        'p_branch': 0.5,  # Probability of a node branching
         'terminals': ['x'],
-        'ops': ['+','-','*','/','**'],
+        'ops': ['+', '-', '*', '/', '**'],
         # Evaluation
-        'eval_method': None,
+        'eval_method': 'zero',
         'target_func': koza_3,
         'fitness_func': mse,
-        'result_fitness_func': mse, # Fitness to compare results
+        'result_fitness_func': mse,  # Fitness to compare results
         'domains': [[-1, 1, 50]],  # The domain of each variable expressed using np.linspace
         'crossover_func': subgraph_crossover,
         # Selection
-        'keep_parents': 2, # Elitism, must be even
-        'k': 2, # Number of randomly chosen parents for each tournament
+        'keep_parents': 2,  # Elitism, must be even
+        'k': 2,  # Number of randomly chosen parents for each tournament
         # Repopulation
         'subgraph_max_height': 4,
-        'new_individual_func': random_tree, # Function used to generate new branches used by mutations
-        'p_c': 0.2, # Probability of crossover
+        'new_individual_func': random_tree,  # Function used to generate new branches used by mutations
+        'p_c': 0.2,  # Probability of crossover
         'mutate_funcs': [
             [subgraph_mutation, 0.3],
             [pointer_mutation, 0.3],
         ],
         # Tests
         'test_kwargs': [
-            ['Initial Population', 'terminals',],
-            ['Variable Only', ['x'],],
-            ['With Constants', ['x']+list(range(-5,6)),],
+            ['Initial Population', 'terminals', ],
+            ['Variable Only', ['x'], ],
+            # ['With Constants', ['x'] + list(range(-5, 6)), ],
         ],
     }
 

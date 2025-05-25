@@ -286,14 +286,39 @@ class Node:
 
             # Returns x once f(x)==0 otherwise x:=f(x)
             case 'zero':
-                return_value = self(*x)
-                for _ in range(100):
-                    new_return_value = self(return_value)
-                    print(return_value)
-                    if new_return_value == 0:
-                        return new_return_value
-                    return_value = new_return_value
-                return return_value
+                if type(x[0]) == np.ndarray:
+                    return_value = []
+                    for i in range(len(x[0])):
+                        xs = [xi[i] for xi in x]
+                        return_value.append(self(*xs, eval_method=eval_method, **kwargs))
+                    return return_value
+                else:
+                    # Only use the first parameter
+                    return_value = x[0]
+                    for _ in range(100):
+                        new_return_value = self(return_value)
+                        print(return_value)
+                        if new_return_value == 0:
+                            return new_return_value
+                        return_value = new_return_value
+                    return return_value
+
+                # return_values = []
+                # for i in range(len(x[0])):
+                #     xs = [xi[i] for xi in x]
+                #     # return_value = self(*x)
+                #     return_value = self(*xs)
+                #     for _ in range(100):
+                #         new_return_value = self(return_value)
+                #         print(return_value)
+                #         if new_return_value == 0:
+                #             # return new_return_value
+                #             return_values.append(new_return_value)
+                #
+                #         return_value = new_return_value
+                #     # return return_value
+                #     return_values.append(return_value)
+                # return return_values
 
             # Evaluate x:=f(x) until even
             case 'even':
@@ -553,9 +578,15 @@ if __name__ == '__main__':
     # d = Node(len(xs))
     # f = -a * e**(-b*(1/d * sum(x**2 for x in xs))**(Node(1)/2)) - e**(1/d * sum(Node.cos(c*x) for x in xs)) + a + e
 
+    f = x - x
 
-    # FIXME ???
-    f = Node.cos(x).to_tree()
+    xs = np.array([1, 2])
+
+    print(f(xs, eval_method='zero'))
+
+    # print(f(np.array([1,2]), eval_method='zero'))
+
+    # f = Node.cos(x).to_tree()
     # f = Node(-1) ** (Node(1) / Node(2))
 
     # f = Node(-1) ** Node(1)
@@ -565,14 +596,14 @@ if __name__ == '__main__':
 
     # print(f.height())
     # print(f.simplify())
-    l = f.limited(not False)
+    # l = f.limited(not False)
 
     # print(l)
 
     # plot_graph(l)
 
     # print(l.height())
-    print(l.simplify())
+    # print(l.simplify())
 
     # f = (x-y)/x
 

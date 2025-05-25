@@ -369,10 +369,7 @@ def plot_results(all_pops, all_fits, **kwargs):
     #     table_best(all_pops, all_fits, title='Best Overall', **kwargs)
 
     # plot_means(np.vectorize(lambda x: len(x[0]))(all_pops), 'Average Number of Nodes')
-
     # plot_medians(np.vectorize(lambda x: len(x[0]))(all_pops), 'Average Number of Nodes')
-
-
     # plot_hist(np.vectorize(lambda x: len(x[0]))(all_pops), 'Average Number of Nodes')
 
     # plot_size(all_pops, all_fits, **kwargs)
