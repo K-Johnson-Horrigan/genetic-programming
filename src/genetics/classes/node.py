@@ -2,11 +2,13 @@ import math
 import numpy as np
 import sympy as sp
 
-# from plot import plot_graph
-
 
 class Node:
-    """A basic class for genetic programming. A Node holds a single value and points to zero or more children Nodes."""
+    """
+    A basic class for genetic programming.
+    A Node holds a single value and points to zero or more children Nodes.
+    A graph of Nodes is used to represent a function in some form.
+    """
 
     # All possible values for a node and the number of children it can have
     valid_ops = {
@@ -297,7 +299,6 @@ class Node:
                     return_value = x[0]
                     for _ in range(100):
                         new_return_value = self(return_value)
-                        print(return_value)
                         if new_return_value == 0:
                             return new_return_value
                         return_value = new_return_value

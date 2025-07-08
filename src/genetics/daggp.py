@@ -1,22 +1,12 @@
+"""
+Genetic programming functions specifically for the evolution of Directed Acyclic Graphs.
+DAGs are represented using the Node class.
+"""
+
 from scipy.optimize import minimize
 
-from node import *
-from plot import *
-
-"""Functions relevant to implementing genetic programming"""
-
-
-#
-# Utility
-#
-
-def choice(arr, rng):
-    """
-    Return a random element of the given array without casting.
-    This exists to simplify code.
-    See: https://github.com/numpy/numpy/issues/10791
-    """
-    return arr[rng.choice(len(arr))]
+from src.genetics.classes.node import *
+from src.utils.utils import choice
 
 
 #
