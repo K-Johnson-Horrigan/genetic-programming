@@ -6,7 +6,7 @@ import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt
 
-from src.genetics import Linear
+from src.genetics import Linear, run_self_rep
 from src.genetics.tmgp import _run_maze_tm, maze_fitness
 from src.utils.save import load_kwargs, load_runs
 
@@ -143,20 +143,6 @@ def plot_tm_graph(trans, ax=None, scale=1, title=None, save=True, show=True, **k
         plt.show()
 
 
-# def plot_tape(tm, fitness_func=None, labels=None, title=None, legend_title=None, **kwargs):
-#     """Plot the resulting Turing tape"""
-#     tape = tm.get_tape_as_array()
-#     # plt.title(fit)
-#     plt.title(title)
-#     plt.scatter(1,1, label=fit)
-#     plt.imshow(tape)
-#     if 'test_kwargs' in kwargs:
-#         plt.legend(title=kwargs['test_kwargs'][0][0])
-#     if 'name' in kwargs:
-#         plt.savefig(f'{kwargs["saves_path"]}{kwargs["name"]}/plots/{title}.png')
-#     plt.show()
-
-
 def plot_tm_maze(trans, ax=None, title=None, save=True, show=True, **kwargs):
     """Plot the resulting tape after running the TM"""
 
@@ -183,66 +169,48 @@ def plot_tm_maze(trans, ax=None, title=None, save=True, show=True, **kwargs):
         plt.show()
 
 
-def plot_trans_array(trans, ax=None, title=None, save=True, show=True, **kwargs):
+def plot_tm_trans_array(trans, ax=None, title=None, save=True, show=True, **kwargs):
     if ax is None:
         fig, ax = plt.subplots()
-
     # States and symbols can be inferred instead of using kwargs
     shape = trans.shape
     states = list(range(shape[0]))
     symbols = list(range(shape[1]))
-
     im = trans[:,:,1]
-
     # Append states
     im = np.concat(([list(symbols)], im), axis=0)
     ax.imshow(im)
-
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_ylabel('States')
     ax.set_xlabel('Symbols')
-
     # ax.set_axis_off()
     ax.invert_yaxis()
     ax.set_xlim((-1.5, shape[1]-.5))
     # ax.set_ylim((-1.5, shape[0]+.5))
-
     for state in states:
         ax.text(-1, state+1, state, ha='center', va='center', color='k')
-
     for symbol in symbols:
         ax.text(symbol, 0, symbol, ha='center', va='center', color='k')
-
-
     # Scatter plot points
     # Initial values are used for the states axis
     xs = [-1] * shape[0]
     ys = [y+1 for y in states]
     c = states.copy()
-
     # Loop over data dimensions and create text annotations.
     for state in states:
         for symbol in symbols:
             xs.append(symbol)
             ys.append(state+1)
             c.append(trans[state, symbol, 0])
-
     # marker = ((-1,-1),(1,-1),(-1,1))
     marker = 'o'
-
     ax.scatter(xs, ys, marker='o', s=1000, c=c, edgecolors='black')
     ax.plot((-.5,-.5,shape[1]-.5),(shape[0]+.5,.5,.5), color='black')
-
     if save:
         plt.savefig(f'{kwargs["saves_path"]}{kwargs["name"]}/plots/{title}.png')
     if show:
         plt.show()
-
-
-
-
-
 
 
 #
@@ -393,9 +361,7 @@ def get_best(all_pops, all_fits, gen=-1, **kwargs):
 
 def plot_grid(all_pops, all_fits, plot_func, title=None, save=True, show=True, **kwargs):
     """Plots a grid of plots over the test kwargs"""
-
     best = get_best(all_pops, all_fits, **kwargs)
-
     if len(kwargs['test_kwargs'][0]) < 2:
         print(f'Plotting failed for {plot_func.__name__}')
     else:
@@ -424,15 +390,12 @@ def plot_grid(all_pops, all_fits, plot_func, title=None, save=True, show=True, *
         for i, tm in enumerate(best):
             print(f'Plotting grid {i+1} of {len(best)} for {plot_func.__name__}')
             plot_func(tm, ax=axs.ravel()[i], title=kwargs['test_kwargs'][i+1][0], show=False, save=False, **kwargs)
-
         fig.supxlabel(kwargs['test_kwargs'][0][2])
         for col in range(ncols):
             axs[-1, col].set_xlabel(values1[col])
-
         fig.supylabel(kwargs['test_kwargs'][0][1])
         for row in range(nrows):
             axs[row, 0].set_ylabel(values0[row])
-
         if save:
             plt.savefig(f'{kwargs["saves_path"]}{kwargs["name"]}/plots/{title}.png')
         if show:
@@ -452,39 +415,30 @@ def plot_results(all_pops, all_fits, **kwargs):
     # plot_medians(np.vectorize(lambda x: len(x[0]))(all_pops), 'Average Number of Nodes')
     # plot_hist(np.vectorize(lambda x: len(x[0]))(all_pops), 'Average Number of Nodes')
 
-    # plot_size(all_pops, all_fits, **kwargs)
-    # plot_quality_gain(all_pops, all_fits, **kwargs)
-    # plot_success_rate(all_pops, all_fits, **kwargs)
-    # plot_effective(all_pops, all_fits, **kwargs)
-    # plot_noop_size(all_pops, all_fits, **kwargs)
-
     # plot_grid(all_pops, all_fits, plot_func=plot_tm_maze, title='Best Solutions', show=False, **kwargs)
     # plot_grid(all_pops, all_fits, plot_func=plot_tm_graph, title='Best Graphs', show=False, **kwargs)
     # plot_grid(all_pops, all_fits, plot_func=plot_trans_array, title='Best Transition Arrays', show=False, **kwargs)
 
-    # values = np.unique(all_pops)
-    # values = np.vectorize(lambda x:
-    #     np.mean(np.atan2(x[:,:,-2],x[:,:,-1]))
-    # )(all_pops)
-    # plot_means(values, 'AverageNumberofNodes', save=False)
-
     # Plot best results of each test
     best = get_best(all_pops, all_fits, **kwargs)
-    for i, tm in enumerate(best):
-        print(Linear(tm, 2).simplified_str())
-    #     plot_trans_array(tm, title=kwargs['test_kwargs'][i+1][0], show=False, **kwargs)
+    for i, code in enumerate(best):
 
+        l = Linear(code, [0], 4)
+        l.run(64)
+        print(l)
 
-
+        # print(f'\nRun {i}')
+        # l = run_self_rep(code, **kwargs)
+        # print(l)
+        # code = np.array(l.out).reshape(-1, 4).tolist()
+        # l = run_self_rep(code, **kwargs)
+        # print(l)
 
 
 
 if __name__ == '__main__':
-    name = 'array_maze_mono_massive'
-    # name = 'array_maze_mono_2'
-    name = 'lgp_test'
+    # name = 'unstable_self_rep_0'
+    name = 'self_mutate_0'
     kwargs = load_kwargs(name, '../../saves/')
-    # kwargs['target'] = np.array(kwargs['target'])
-    # kwargs['maze_sol'] = np.array(kwargs['maze_sol'])
     pops, fits = load_runs(**kwargs)
     plot_results(pops, fits, **kwargs)
