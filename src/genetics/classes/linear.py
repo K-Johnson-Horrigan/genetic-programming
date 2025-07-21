@@ -20,7 +20,7 @@ class Linear:
         # 'MUL',
         # 'DIV',
         'IFEQ',
-        'RAND',
+        # 'RAND',
     )
     STOP  = VALID_OPS.index('STOP')  if 'STOP'  in VALID_OPS else None
     LOAD  = VALID_OPS.index('LOAD')  if 'LOAD'  in VALID_OPS else None
@@ -60,7 +60,7 @@ class Linear:
 
         # Fetch the current line to be executed and unpack
         # Program counter loops back to start
-        pc = self.vars[Linear.PROGRAM_COUNTER_REGISTER_INDEX]
+        pc = int(self.vars[Linear.PROGRAM_COUNTER_REGISTER_INDEX])
         code_line = [self.code[(pc + i) % len(self.code)] for i in range(Linear.LINE_LENGTH)]
         op_code, target_reg, operand_spec, addr_mode = code_line
 
