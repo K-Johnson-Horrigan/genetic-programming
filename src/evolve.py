@@ -86,32 +86,27 @@ def next_pop(pop, **kwargs):
         while len(new_pop) < len(pop):
 
             # Selection
-            c0, f0 = tournament_selection(**kwargs)
-            c1, f1 = tournament_selection(**kwargs)
+            org_0, fit_0 = tournament_selection(**kwargs)
+            org_1, fit_1 = tournament_selection(**kwargs)
 
-            c0 = c0.copy()
-            c1 = c1.copy()
-
-            # Crossover
-            # c = kwargs['rng'].random()
-            # if c < kwargs['p_c']:
-            #     c0, c1 = kwargs['crossover_func'](c0, c1, **kwargs)
+            org_0 = org_0.copy()
+            org_1 = org_1.copy()
 
             # Crossover
             a, p = zip(*kwargs['crossover_funcs'])
             crossover_func = kwargs['rng'].choice(a=a, p=p)
             if crossover_func is not None:
-                c0, c1 = crossover_func(c0, c1, **kwargs)
+                org_0, org_1 = crossover_func(org_0, org_1, **kwargs)
 
             # Mutation
             a, p = zip(*kwargs['mutate_funcs'])
             mutate_func = kwargs['rng'].choice(a=a, p=p)
             if mutate_func is not None:
-                c0 = mutate_func(c0, **kwargs)
-                c1 = mutate_func(c1, **kwargs)
+                org_0 = mutate_func(org_0, **kwargs)
+                org_1 = mutate_func(org_1, **kwargs)
 
-            new_pop.append(c0)
-            new_pop.append(c1)
+            new_pop.append(org_0)
+            new_pop.append(org_1)
 
         return new_pop, kwargs['fits']
 
@@ -191,7 +186,7 @@ def _simulate_and_save_test_run(test_num, run_num, test_kwargs, base_kwargs):
 def simulate_tests(num_runs, test_kwargs, **kwargs):
     """
     Simulate all runs for all tests with different hyperparameters.
-    There are four levels: [test] [run/replicant] [generation/population] [individual]
+    There are four levels: [test] [run/replicant] [generation/population] [organism/individual]
     """
 
     # Save kwargs first in case of failure

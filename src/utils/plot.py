@@ -289,7 +289,7 @@ def plot_medians(values, ylabel):
     plt.show()
 
 
-def plot_box(values, ylabel, ax=None, save=True, show=True):
+def plot_box(values, ylabel, ax=None, save=True, show=True, **kwargs):
     if ax is None:
         fig, ax = plt.subplots()
     positions = range(len(kwargs['test_kwargs']) - 1)
@@ -334,11 +334,6 @@ def plot_box(values, ylabel, ax=None, save=True, show=True):
 #     plt.legend(title=kwargs['test_kwargs'][0][0])
 #     plt.savefig(f'{kwargs["saves_path"]}{kwargs["name"]}/plots/{ylabel}.png')
 #     plt.show()
-
-
-
-
-
 
 
 #
@@ -396,15 +391,6 @@ def table_best(obj, **kwargs):
     row.append((sum((abs(y_target - y_actual)) ** 2) / len(cases)) ** (1 / 2))
     row = '{:2} │ {:5} │ {:2} │ {:4} │ {:4.1f} │ {:5.1f} │ {} │ {} │'.format(*row)
     print(row)
-
-
-    # Calculate MSE
-    # y_actual = np.array(y_actual)
-    # fit = (sum((abs(y_target - y_actual)) ** 2) / len(cases)) ** (1 / 2)
-
-
-
-
 
 
 #
@@ -484,7 +470,7 @@ def plot_results(all_pops, all_fits, **kwargs):
     # plot_medians(np.vectorize(lambda x: len(x[0]))(all_pops), 'Average Number of Nodes')
     # plot_hist(np.vectorize(lambda x: len(x[0]))(all_pops), 'Average Number of Nodes')
 
-    plot_box(all_fits[:,:,-1], 'Fitness', show=False)
+    plot_box(all_fits[:,:,-1], 'Final Fitness', show=False, **kwargs)
 
     # plot_grid(all_pops, all_fits, plot_func=plot_tm_maze, title='Best Solutions', show=False, **kwargs)
     # plot_grid(all_pops, all_fits, plot_func=plot_tm_graph, title='Best Graphs', show=False, **kwargs)

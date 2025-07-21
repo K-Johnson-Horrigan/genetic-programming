@@ -32,6 +32,24 @@ def random_code(**kwargs):
 # Fitness Functions
 #
 
+def lgp_rmse(pop, target_func, domains, **kwargs):
+    """Calculate the fitness value of all individuals in a population against the target function for the provided domain"""
+    # 2D array of input variables for each test case
+    cases = cartesian_prod(*domains)
+    y_target = np.array([target_func(*list(case)) for case in cases])
+    fits = np.empty(len(pop))
+    for i, org in enumerate(pop):
+        y_actual = []
+        for case in cases:
+            # Evaluate the organism
+            l = Linear([[0]+list(case)+[0], np.ravel(org)])
+            l.run(kwargs['timeout'])
+            y_actual = np.append(y_actual, l.vars[-1])
+        # Calculate MSE
+        fits[i] = (sum((abs(y_target - y_actual)) ** 2) / len(cases)) ** 0.5
+    return fits
+
+
 def lgp_mse(pop, target_func, domains, **kwargs):
     """Calculate the fitness value of all individuals in a population against the target function for the provided domain"""
     # 2D array of input variables for each test case
@@ -397,3 +415,28 @@ if __name__ == '__main__':
     # r = lgp_mse([code], x2, [[0,1,2,3,4]], timeout=3)
     #
     # print(r)
+
+
+    # Multiply
+    code = [
+        [Linear.IFEQ, 2,  4, Linear.CODE_DIRECT],
+        [Linear.STOP, 2,  9, Linear.VARS_DIRECT],
+        [Linear.SUB,  2, 15, Linear.CODE_DIRECT],
+        [Linear.ADD,  3, 13, Linear.VARS_DIRECT],
+    ]
+
+    # code = [
+    #     [5, 2,  4, 3],
+    #     [0, 2,  9, 1],
+    #     [4, 2, 15, 3],
+    #     [3, 3, 13, 1],
+    # ]
+
+    case = [2,10]
+    l = Linear([[0] + list(case) + [0], np.ravel(code)])
+    l.run(64)
+    y_actual = l.vars[-1]
+    print(l)
+
+    # fits = lgp_rmse([code], multiply, [list(range(5)),list(range(5))], timeout=64)
+    # print(fits)

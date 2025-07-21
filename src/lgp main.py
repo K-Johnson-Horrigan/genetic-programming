@@ -5,13 +5,13 @@ from src.utils.save import load_runs
 
 
 kwargs = {
-    'name': 'mult_2',  # Name of folder to contain all results
+    'name': 'mult_1',  # Name of folder to contain all results
     'seed': None,
     'verbose': True,
     'parallelize': True,
     'saves_path': '../saves/',  # Save path relative to this file
     ## Size ##
-    'num_runs': 5,
+    'num_runs': 6,
     'num_gens': 200,
     'pop_size': 200,
     'min_len': 4,
@@ -24,10 +24,11 @@ kwargs = {
     'ops': list(range(len(Linear.VALID_OPS))),
     'addr_modes': list(range(len(Linear.VALID_ADDR_MODES))),
     ## Evaluation ##
-    'fitness_func': lgp_error,
+    'fitness_func': lgp_rmse,
     'target_func': multiply,
     'domains': [list(range(5)), list(range(5))],  # Cases are generated from the Cartesian product
     'timeout': 64,
+    'result_fitness_func': lgp_mse,
     ## Selection ##
     'minimize_fitness': True,
     'keep_parents': 2,  # Elitism, must be even
@@ -40,12 +41,18 @@ kwargs = {
         [point_mutation, 0.9],
     ],
     ## Tests ##
+    # 'test_kwargs': [
+    #     ['Fitness Func', 'fitness_func'],
+    #     ['MSE', lgp_mse],
+    #     ['Sum', lgp_error],
+    # ]
     'test_kwargs': [
         ['Max Length', 'init_max_len', 'max_len'],
-        [ '4',  4,  4],
-        [ '8',  8,  8],
-        ['12', 12, 12],
-        ['16', 16, 16],
+        # [ '4',  4,  4],
+        # [ '8',  8,  8],
+        # ['12', 12, 12],
+        # ['16', 16, 16],
+        *[[str(i),i,i] for i in [4,16,32,64]],
     ],
     # 'test_kwargs': [
     #     ['Crossover, Mutation', 'crossover_funcs', 'mutate_funcs'],
