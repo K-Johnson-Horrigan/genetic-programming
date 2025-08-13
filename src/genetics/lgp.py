@@ -27,21 +27,50 @@ def random_code(**kwargs):
     code = [_random_line(**kwargs) for _ in range(init_len)]
     return code
 
-def random_self_rep_code(**kwargs):
+def random_code_uniform(**kwargs):
     self_rep = [
-        Linear.RAND, 32,  1, Linear.VARS_DIRECT,   # Generate random value
+        Linear.RAND,  2,  1, Linear.VARS_DIRECT,   # Generate random value
         Linear.IFEQ,  1,  0, Linear.IMMEDIATE,     # Execute next line if random value is 0
         Linear.LOAD,  3,  2, Linear.MEM2_INDIRECT, # Load temp value from MEM2
         Linear.IFEQ,  1,  0, Linear.IMMEDIATE,     # Execute next line if random value is 0
         Linear.STORE, 3,  2, Linear.MEM3_INDIRECT, # Store temp value into MEM2
         Linear.ADD,   2,  1, Linear.IMMEDIATE,     # Increment copy pointer
     ]
-
     init_len = kwargs['rng'].integers(kwargs['init_min_len'], kwargs['init_max_len']+1)
     code = [_random_line(**kwargs) for _ in range(init_len)]
     code = sum(code, [])
     code = [code, self_rep]
     return code
+
+def random_code_one_point(**kwargs):
+    self_rep = [
+        Linear.IFEQ,  1,  0, Linear.IMMEDIATE,     # Check if copy pointer is 0
+        Linear.RAND,4*7,  1, Linear.VARS_DIRECT,   # Randomly move the copy pointer
+        Linear.LOAD,  2,  1, Linear.MEM2_INDIRECT, # Load temp value from MEM2
+        Linear.STORE, 2,  1, Linear.MEM3_INDIRECT, # Store temp value into MEM3
+        Linear.ADD,   1,  1, Linear.IMMEDIATE,     # Increment copy pointer
+        Linear.IFEQ,  1,4*7, Linear.IMMEDIATE,     # Check if copy pointer is at last position
+        Linear.STOP,  0,  0, Linear.IMMEDIATE,     # End execution
+    ]
+    init_len = kwargs['rng'].integers(kwargs['init_min_len'], kwargs['init_max_len']+1)
+    code = [_random_line(**kwargs) for _ in range(init_len)]
+    code = sum(code, [])
+    code = [code, self_rep]
+    return code
+
+def random_non_self_rep_code(**kwargs):
+    self_rep = [_random_line(**kwargs) for _ in range(6)]
+    self_rep = sum(self_rep, [])
+    init_len = kwargs['rng'].integers(kwargs['init_min_len'], kwargs['init_max_len']+1)
+    code = [_random_line(**kwargs) for _ in range(init_len)]
+    code = sum(code, [])
+    code = [code, self_rep]
+    return code
+
+def random_random_code(**kwargs):
+    func_index = kwargs['rng'].integers(0, 3)
+    funcs = [random_code_uniform, random_code_one_point, random_non_self_rep_code]
+    return funcs[func_index](**kwargs)
 
 #
 # Fitness Functions
@@ -150,23 +179,10 @@ def self_rep(pop, **kwargs):
 
 def lgp_rmse(pop, target_func, domains, **kwargs):
     """Calculate the fitness value of all individuals in a population against the target function for the provided domain"""
-    # 2D array of input variables for each test case
-    cases = cartesian_prod(*domains)
-    y_target = np.array([target_func(*list(case)) for case in cases])
-    fits = np.empty(len(pop))
-    for i, org in enumerate(pop):
-        y_actual = []
-        for case in cases:
-            # Evaluate the organism
-            l = Linear([[0]+list(case)+[0], np.ravel(org)])
-            l.run(kwargs['timeout'])
-            y_actual = np.append(y_actual, l.vars[-1])
-        # Calculate RMSE
-        fits[i] = (sum((abs(y_target - y_actual)) ** 2) / len(cases)) ** 0.5
-    return fits
+    return lgp_mse(pop, target_func, domains, rmse=True, **kwargs)
 
 
-def lgp_mse(pop, target_func, domains, **kwargs):
+def lgp_mse(pop, target_func, domains, rmse=False, **kwargs):
     """Calculate the fitness value of all individuals in a population against the target function for the provided domain"""
     # 2D array of input variables for each test case
     cases = cartesian_prod(*domains)
@@ -181,6 +197,9 @@ def lgp_mse(pop, target_func, domains, **kwargs):
             y_actual = np.append(y_actual, l.vars[-1])
         # Calculate MSE
         fits[i] = sum((abs(y_target - y_actual)) ** 2) / len(cases)
+        # Calculate RMSE
+        if rmse:
+            fits[i] **= 0.5
     return fits
 
 
@@ -212,7 +231,7 @@ def lgp_self_rep_rmse(pop, target_func, domains, **kwargs):
         y_actual = []
         for case in cases:
             # Evaluate the organism
-            l = Linear([[0]+list(case)+[-100], org[0]])
+            l = Linear([[0]+list(case)+[0], org[0]])
             l.run(kwargs['timeout'])
             y_actual = np.append(y_actual, l.vars[-1])
         # Calculate RMSE
@@ -231,6 +250,9 @@ def power(x0,x1): return x0 ** x1
 #
 # Crossover Functions
 #
+
+# def uniform_crossover(a,b,**kwargs):
+#     for i in range()
 
 def one_point_crossover(a, b, **kwargs):
     cut_a = kwargs['rng'].integers(0, len(a) + 1)
@@ -277,10 +299,10 @@ def self_crossover(a,b,**kwargs):
     new_b_solv = [[0, 0, 0, 0], b_repl, b_solv, a_solv]
     new_b_repl = [[0, 0, 0, 0], b_repl, b_repl, a_repl]
 
-    new_a_solv = Linear(new_a_solv).run(kwargs['timeout']).mem[3]
-    new_a_repl = Linear(new_a_repl).run(kwargs['timeout']).mem[3]
-    new_b_solv = Linear(new_b_solv).run(kwargs['timeout']).mem[3]
-    new_b_repl = Linear(new_b_repl).run(kwargs['timeout']).mem[3]
+    new_a_solv = Linear(new_a_solv, rand=True).run(kwargs['timeout']).mem[3]
+    new_a_repl = Linear(new_a_repl, rand=True).run(kwargs['timeout']).mem[3]
+    new_b_solv = Linear(new_b_solv, rand=True).run(kwargs['timeout']).mem[3]
+    new_b_repl = Linear(new_b_repl, rand=True).run(kwargs['timeout']).mem[3]
 
     new_a = [new_a_solv, new_a_repl]
     new_b = [new_b_solv, new_b_repl]
@@ -309,178 +331,3 @@ def point_mutation(code, **kwargs):
 
 if __name__ == '__main__':
     pass
-
-    # a = 'abcde'
-    # b = '1234567'
-    #
-    # c,d = two_point_crossover(a, b, min_len=4, max_len=16, rng=np.random.default_rng())
-
-    # min_len = 1
-    # max_len = 40
-    #
-    # # al = test_all_two_point_crossover(a, b, min_len=min_len, max_len=max_len)
-    # # al = list(set(al))
-    # #
-    # # l = calc_all_two_point_crossover(a, b, min_len=min_len, max_len=max_len)
-    # # l = list(set(l))
-    # #
-    # # print(len(l), len(al))
-    # # print(set(al)-set(l))
-    #
-    # # uc = np.array(np.unique(l, return_counts=True)).T
-    # # print(uc)
-    #
-    # d = {}
-    #
-    # for _ in range(10000):
-    #     ab = one_point_crossover(a, b, rng=np.random.default_rng(), min_len=0, max_len=40)
-    #     if ab in d:
-    #         d[ab] += 1
-    #     else:
-    #         d[ab] = 1
-    #
-    # for key in d:
-    #     print(f'{key} {d[key]}')
-    #
-    # print(len(d))
-
-
-    # ALMOST SELF REP
-    # PROGRAM MEMORY
-    #  0 │ SUB   │  1 │  3 │ IMMEDIATE
-    #  4 │ LOAD  │  2 │  4 │ MEM_INDIRECT
-    #  8 │ STORE │  2 │ 10 │ OUT_INDIRECT
-    # 12 │ IFEQ  │  1 │  8 │ MEM_INDIRECT     THIS LINE HERE
-    # 16 │ SUB   │  1 │  3 │ OUT_DIRECT
-    # OUTPUT MEMORY
-    #  0 │ STOP  │  1 │  3 │ IMMEDIATE
-    #  4 │ LOAD  │  2 │  0 │ MEM_INDIRECT
-    #  8 │ STORE │  0 │ 10 │ OUT_INDIRECT
-    # 12 │ IFEQ  │  1 │  8 │ MEM_INDIRECT
-    # 16 │ SUB   │  1 │  3 │ OUT_DIRECT
-    # OUTPUT MEMORY
-    #  0 │ STOP  │  0 │  0 │ IMMEDIATE
-    #  4 │ STOP  │  0 │  0 │ IMMEDIATE
-    #  8 │ STOP  │  0 │  0 │ IMMEDIATE
-    # 12 │ STOP  │  0 │  0 │ IMMEDIATE
-    # 16 │ STOP  │  0 │  0 │ IMMEDIATE
-
-    # code = [
-    #     [Linear.SUB   ,  1 ,  3 , Linear.IMMEDIATE],
-    #     [Linear.LOAD  ,  2 ,  4 , Linear.MEM_INDIRECT],
-    #     [Linear.STORE ,  2 , 10 , Linear.OUT_INDIRECT],
-    #     # [Linear.IFEQ  ,  1 ,  8 , Linear.MEM_INDIRECT],
-    #     [Linear.SUB   ,  1 ,  3 , Linear.OUT_DIRECT],
-    # ]
-
-#     PROGRAM
-#     MEMORY
-#     0 │ STORE │  2 │  9 │ OUT_INDIRECT
-#     4 │ SUB   │  2 │  1 │ MEM_DIRECT
-#     8 │ LOAD  │  1 │  5 │ MEM_INDIRECT
-# 12 │ STORE │  1 │  8 │ OUT_INDIRECT
-# OUTPUT
-# MEMORY
-# 0 │ STORE │  2 │  9 │ OUT_INDIRECT
-# 4 │ ADD   │  2 │  1 │ MEM_DIRECT
-# 8 │ LOAD  │  1 │  5 │ MEM_INDIRECT
-# 12 │ STORE │  1 │  8 │ OUT_INDIRECT
-
-    # code = [
-    #     [Linear.STORE, 2, 9, Linear.OUT_INDIRECT],
-    #     [Linear.SUB, 2, 1, Linear.MEM_DIRECT],
-    #     [Linear.LOAD, 1, 5, Linear.MEM_INDIRECT],
-    #     [Linear.STORE, 1, 8, Linear.OUT_INDIRECT],
-    # ]
-
-    # code = [
-    #     [2, 5, 9, 4],
-    #     [4, 2, 1, 5],
-    #     [1, 7, 5, 6],
-    #     [2, 7, 8, 4],
-    # ]
-    #
-    # code = [
-    #     [Linear.STORE, 2, 9, Linear.OUT_INDIRECT],
-    #     [Linear.SUB, 2, 1, Linear.MEM_DIRECT],
-    #     [Linear.LOAD, 1, 5, Linear.MEM_INDIRECT],
-    #     [Linear.STORE, 1, 8, Linear.OUT_INDIRECT],
-    # ]
-    #
-    # ll = run_self_rep(code, timeout=64)
-    # print(ll)
-    #
-    # code = np.array(ll.out).reshape(-1,4).tolist()
-    # print(code)
-    # ll = run_self_rep(code, timeout=64)
-    # print(ll)
-    #
-    # code = np.array(ll.out).reshape(-1,4).tolist()
-    # print(code)
-    # ll = run_self_rep(code, timeout=64)
-    # print(ll)
-
-    # Self-Rep / Crossover / Mutation
-    # code = [[
-    #     0, # PC
-    #     0, # Random value
-    #     0, # Copy pointer
-    #     0, # Temp
-    # ],[
-    #     Linear.RAND,  1,  1, Linear.VARS_DIRECT,   # Generate random value
-    #     Linear.IFEQ,  1,  0, Linear.IMMEDIATE,     # Execute next line if random value is 0
-    #     Linear.LOAD,  3,  2, Linear.CODE_INDIRECT, # Load temp value from MEM2
-    #     Linear.IFEQ,  1,  0, Linear.IMMEDIATE,     # Execute next line if random value is 0
-    #     Linear.STORE, 3,  2, Linear.MEM2_INDIRECT, # Store temp value into MEM2
-    #     Linear.ADD,   2,  1, Linear.IMMEDIATE,     # Increment copy pointer
-    # ],[
-    #     32, 32, 32, 32,
-    #     32, 32, 32, 32,
-    #     32, 32, 32, 32,
-    #     32, 32, 32, 32,
-    #     32, 32, 32, 32,
-    #     32, 32, 32, 32,
-    # ]]
-
-    #
-    # code = [
-    #     Linear.ADD, 2, 1, Linear.VARS_DIRECT,
-    #     Linear.ADD, 2, 1, Linear.VARS_DIRECT,
-    #     Linear.STOP, 0, 0, 0,
-    # ]
-    #
-    # # l = Linear([[0,2,5,0], code])
-    # # l.run(2)
-    # # print(l)
-    # #
-    #
-    # r = lgp_mse([code], x2, [[0,1,2,3,4]], timeout=3)
-    #
-    # print(r)
-
-
-    # Multiply
-    code = [
-        [Linear.IFEQ, 2,  4, Linear.CODE_DIRECT],
-        [Linear.STOP, 2,  9, Linear.VARS_DIRECT],
-        [Linear.SUB,  2, 15, Linear.CODE_DIRECT],
-        [Linear.ADD,  3, 13, Linear.VARS_DIRECT],
-    ]
-
-    # code = [
-    #     [5, 2,  4, 3],
-    #     [0, 2,  9, 1],
-    #     [4, 2, 15, 3],
-    #     [3, 3, 13, 1],
-    # ]
-
-    # case = [2,10]
-    # l = Linear([[0] + list(case) + [0], np.ravel(code)])
-    # l.run(64)
-    # y_actual = l.vars[-1]
-    # print(l)
-
-
-
-    # fits = lgp_rmse([code], multiply, [list(range(5)),list(range(5))], timeout=64)
-    # print(fits)

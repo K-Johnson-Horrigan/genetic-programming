@@ -2,7 +2,7 @@
 Core functions used in controlling evolution
 All functions are independent of the subject of evolution
 """
-
+import copy
 from multiprocessing import Pool, cpu_count
 
 import numpy as np
@@ -89,8 +89,8 @@ def next_pop(pop, **kwargs):
             org_0, fit_0 = tournament_selection(**kwargs)
             org_1, fit_1 = tournament_selection(**kwargs)
 
-            org_0 = org_0.copy()
-            org_1 = org_1.copy()
+            org_0 = copy.deepcopy(org_0)
+            org_1 = copy.deepcopy(org_1)
 
             # Crossover
             a, p = zip(*kwargs['crossover_funcs'])

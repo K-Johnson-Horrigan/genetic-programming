@@ -1,8 +1,7 @@
 from evolve import simulate_tests
 from genetics import *
 from src.utils.plot import plot_results
-from src.utils.save import load_runs
-
+from src.utils.save import load_runs, load_fits
 
 # kwargs = {
 #     'name': 'self_rep_mult_0',  # Name of folder to contain all results
@@ -64,21 +63,21 @@ from src.utils.save import load_runs
 
 
 kwargs = {
-    'name': 'self_rep_mult_1',  # Name of folder to contain all results
+    'name': 'random_self_rep_mult_0',  # Name of folder to contain all results
     'seed': None,
     'verbose': True,
     'parallelize': True,
     'saves_path': '../saves/',  # Save path relative to this file
     ## Size ##
     'num_runs': 12,
-    'num_gens': 1000,
+    'num_gens': 100,
     'pop_size': 1000,
-    'min_len': 8,
-    'max_len': 8,
+    'min_len': 4,
+    'max_len': 4,
     ## Initialization ##
-    'init_individual_func': random_self_rep_code,  # Function used to generate a new organism
-    'init_min_len': 8,
-    'init_max_len': 8,
+    'init_individual_func': random_code_uniform,  # Function used to generate a new organism
+    'init_min_len': 4,
+    'init_max_len': 4,
     'max_value': 16,
     'ops': list(range(len(Linear.VALID_OPS))),
     'addr_modes': list(range(len(Linear.VALID_ADDR_MODES))),
@@ -86,6 +85,7 @@ kwargs = {
     'fitness_func': lgp_self_rep_rmse,
     'target_func': multiply,  # The function that the organism is attempting to replicate
     'domains': [list(range(0, 4)), list(range(0, 4))],  # Cases are generated from the Cartesian product
+    # 'domains': [[3,5,7], [2,4,6]],  # Cases are generated from the Cartesian product
     'timeout': 64,  # Number of evaluation iterations before forced termination
     ## Selection ##
     'minimize_fitness': True,
@@ -101,9 +101,13 @@ kwargs = {
     ],
     ## Tests ##
     'test_kwargs': [
-        ['Crossover Rate', 'crossover_funcs'],
-        ['0.5', [[self_crossover, 0.5]]],
-        ['1.0', [[self_crossover, 1.0]]],
+        ['Crossover Rate', 'init_individual_func', 'fitness_func', 'crossover_funcs', ],
+        # ['1.0', random_non_self_rep_code, lgp_self_rep_rmse, [[self_crossover, 1.0]]],
+        ['0.7', random_random_code, lgp_self_rep_rmse, [[self_crossover, 0.7]]],
+        ['1.0', random_random_code, lgp_self_rep_rmse, [[self_crossover, 1.0]]],
+        # ['0.5', random_self_rep_code, lgp_self_rep_rmse, [[self_crossover, 0.5]]],
+        # ['1.0', random_self_rep_code, lgp_self_rep_rmse, [[self_crossover, 1.0]]],
+        # ['p.5', random_code, lgp_rmse, [[two_point_crossover, 1.0]]],
     ],
     # 'test_kwargs': [
     #     ['Crossover, Mutation', 'crossover_funcs', 'mutate_funcs'],
@@ -122,9 +126,10 @@ kwargs = {
     # ],
 }
 
-
-
 if __name__ == '__main__':
     simulate_tests(**kwargs)
-    pops, fits = load_runs(**kwargs)
-    plot_results(pops, fits, **kwargs)
+    fits = load_fits(**kwargs)
+    plot_results(fits, **kwargs)
+
+
+

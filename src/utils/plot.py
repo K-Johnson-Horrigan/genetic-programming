@@ -230,7 +230,37 @@ def plot_fitness(all_fits, ax=None, save=True, show=True, **kwargs):
         else:
             y = np.mean(np.max(all_fits[test], axis=2), axis=0)
             ax.set_ylabel('Average Max Fitness Value')
-        # plt.plot(x, y, label=kwargs['test_kwargs'][test + 1][0])
+        plt.plot(x, y, label=kwargs['test_kwargs'][test + 1][0])
+        # y_std = np.std(np.min(all_fits[test], axis=2), axis=0)
+        # ax.fill_between(x, y - y_std, y + y_std, alpha=0.2)
+        # Scatter plot all points
+        xx = x.reshape((1,len(x),1)).repeat(all_fits.shape[1], axis=0).repeat(all_fits.shape[3], axis=2).ravel()
+        yy = all_fits[test].ravel()
+        plt.scatter(xx, yy, 0.1)
+    # ax.set_yscale('log')
+    ax.set_xlabel('Generation')
+    plt.legend(title=kwargs['test_kwargs'][0][0])
+    if save:
+        plt.savefig(f'{kwargs["saves_path"]}{kwargs["name"]}/plots/Fitness.png')
+    if show:
+        plt.show()
+    plt.close()
+
+
+
+def plot_mean_fitness(all_fits, ax=None, save=True, show=True, **kwargs):
+    """Plot the average of the runs' minimum fitness for each test"""
+    if ax is None:
+        fig, ax = plt.subplots()
+    x = np.array(range(all_fits.shape[2]))
+    for test in range(all_fits.shape[0]):
+        if kwargs['minimize_fitness']:
+            y = np.mean(np.mean(all_fits[test], axis=2), axis=0)
+            ax.set_ylabel('Average Min Fitness Value')
+        else:
+            y = np.mean(np.mean(all_fits[test], axis=2), axis=0)
+            ax.set_ylabel('Average Max Fitness Value')
+        plt.plot(x, y, label=kwargs['test_kwargs'][test + 1][0])
         # y_std = np.std(np.min(all_fits[test], axis=2), axis=0)
         # ax.fill_between(x, y - y_std, y + y_std, alpha=0.2)
         # Scatter plot all points
@@ -463,6 +493,8 @@ def plot_results(all_fits, **kwargs):
 
     plot_fitness(all_fits, show=False, **kwargs)
 
+    plot_mean_fitness(all_fits, show=False, **kwargs)
+
     # plot_means(np.vectorize(lambda x: len(x))(all_pops), 'Average Length', show=False, **kwargs)
     # plot_medians(np.vectorize(lambda x: len(x[0]))(all_pops), 'Average Number of Nodes')
     # plot_hist(np.vectorize(lambda x: len(x[0]))(all_pops), 'Average Number of Nodes')
@@ -475,7 +507,7 @@ def plot_results(all_fits, **kwargs):
     # plot_grid(all_pops, all_fits, plot_func=plot_fitness, title='Best Solutions', show=False, **kwargs)
 
     # Plot best results of each test
-    bests = zip(*get_best(all_fits, gen=slice(None), **kwargs))
+    bests = zip(*get_best(all_fits, **kwargs))
     for i, best in enumerate(bests):
         best_obj, best_fit = best
         test_name = kwargs['test_kwargs'][i+1][0]
@@ -494,7 +526,7 @@ def plot_results(all_fits, **kwargs):
 
 if __name__ == '__main__':
     # name = 'unstable_self_rep_0'
-    name = 'self_rep_mult_1'
+    name = 'random_self_rep_mult_0'
     kwargs = load_kwargs(name, '../../saves/')
     fits = load_fits(**kwargs)
     plot_results(fits, **kwargs)

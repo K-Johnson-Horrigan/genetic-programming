@@ -7,7 +7,7 @@ class Linear:
 
     """
 
-    PROGRAM_COUNTER_REGISTER_INDEX = 0
+    PC_INDEX = 0
     LINE_LENGTH = 4
     MAX_VALUE = 256
 
@@ -54,26 +54,36 @@ class Linear:
     MEM3_DIRECT   = VALID_ADDR_MODES.index('MEM3_DIRECT')   if 'MEM3_DIRECT'   in VALID_ADDR_MODES else None
     MEM3_INDIRECT = VALID_ADDR_MODES.index('MEM3_INDIRECT') if 'MEM3_INDIRECT' in VALID_ADDR_MODES else None
 
-    def __init__(self, mem):
+    def __init__(self, mem, rand=False):
         self.mem = mem
         self.vars = self.mem[0]
         self.code = self.mem[1]
+        self.rand = rand
 
 
     def step(self):
 
         # Fetch the current line to be executed and unpack
         # Program counter loops back to start
-        pc = int(self.vars[Linear.PROGRAM_COUNTER_REGISTER_INDEX])
+        pc = int(self.vars[Linear.PC_INDEX])
         code_line = [self.code[(pc + i) % len(self.code)] for i in range(Linear.LINE_LENGTH)]
         op_code, target_reg, operand_spec, addr_mode = code_line
 
         # Values are modified to always be valid references
         op_code    = int(op_code)    % len(Linear.VALID_OPS)
+
+        # Change RAND to STORE if random mode is off
+        if op_code == Linear.RAND and not self.rand:
+            op_code = Linear.STORE
+
+        # Values are modified to always be valid references
         target_reg = int(target_reg) % len(self.vars) if op_code != Linear.RAND else int(target_reg)
         addr_mode  = int(addr_mode)  % (len(self.mem) * 2 + 1)
 
         # Fetch the operand
+        # Value of 0 is IMMEDIATE
+        # Odd numbers are DIRECT
+        # Even values are INDIRECT
         if addr_mode % 2 == 1:
             mem_index = (addr_mode - 1) // 2
             operand = self.mem[mem_index][int(operand_spec) % len(self.mem[mem_index])]
@@ -83,10 +93,12 @@ class Linear:
         else:
             operand = operand_spec
 
-        # Increment register
-        self.vars[Linear.PROGRAM_COUNTER_REGISTER_INDEX] += Linear.LINE_LENGTH
+        # Increment program counter
+        self.vars[Linear.PC_INDEX] += Linear.LINE_LENGTH
 
-        # Preform the operation
+
+
+        # Perform the operation
         match op_code:
             case None: raise BaseException('invalid operation')
             case Linear.STOP: return True
@@ -104,7 +116,7 @@ class Linear:
             case Linear.DIV:  self.vars[target_reg] = (self.vars[target_reg] / operand) % Linear.MAX_VALUE
             case Linear.IFEQ:
                 if self.vars[target_reg] != operand:
-                    self.vars[Linear.PROGRAM_COUNTER_REGISTER_INDEX] += Linear.LINE_LENGTH
+                    self.vars[Linear.PC_INDEX] += Linear.LINE_LENGTH
             case Linear.RAND:
                 low  = min(0, target_reg)
                 high = max(0, target_reg)
@@ -154,38 +166,12 @@ class Linear:
 
 
 if __name__ == '__main__':
+    pass
 
-    # pc,a,b,t = 0,1,2,3
-    # code = [
-    #     [Linear.LOAD,  t, a, Linear.INDIRECT],
-    #     [Linear.STORE, t, b, Linear.INDIRECT],
-    #     [Linear.ADD,   a, 1, Linear.IMMEDIATE],
-    #     [Linear.ADD,   b, 1, Linear.IMMEDIATE],
-    #     [Linear.SUB,  pc, 4*5, Linear.IMMEDIATE],
-    #     [Linear.STOP, 0, 0, Linear.IMMEDIATE] * 20
-    # ]
-    # l = Linear(code, [4,4*7], 1)
-
-
-    # code = [
-    #     [Linear.LOAD,  a, pc, Linear.DIRECT], # Copy PC to value of a-pointer
-    #     [Linear.LOAD,  t,  a, Linear.INDIRECT], # Copy a-pointer to temp
-    #     [Linear.STORE, t,  b, Linear.INDIRECT], # Copy temp to b-pointer
-    #     [Linear.ADD,   a,  1, Linear.IMMEDIATE], # move a-pointer to next value
-    #     [Linear.ADD,   b,  1, Linear.IMMEDIATE], # Move b-pointer to next value
-    #     [Linear.IFEQ,  b, 32, Linear.IMMEDIATE], # b is at the end
-    #     [Linear.STOP, 0, 0, Linear.IMMEDIATE], # Stop
-    #     [Linear.SUB,  pc, 4*7, Linear.IMMEDIATE], # Return to start
-    # ]
-
-    # code = [
-    #     [Linear.RAND, 64, 1, Linear.VARS_DIRECT],
-    #     [Linear.RAND, 64, 1, Linear.OUT_INDIRECT],
-    # ]
-
-    # # Mutate
+    ## Mutate ##
     # code = [[
-    #     0, 0,
+    #     0,
+    #     0,
     # ],[
     #     Linear.RAND, 64, 1, Linear.VARS_DIRECT,
     #     Linear.RAND, 64, 1, Linear.MEM2_INDIRECT,
@@ -194,29 +180,66 @@ if __name__ == '__main__':
     #     0, 0, 0, 0,
     # ]]
 
-    # Self-Rep / Crossover / Mutation
+    ## Self-Rep / Crossover / Mutation ##
+    # code = [[
+    #     0, # PC
+    #     0, # Random value
+    #     0, # Copy pointer
+    #     0, # Temp
+    # ],[
+    #     Linear.RAND,  1,  1, Linear.VARS_DIRECT,   # Generate random value
+    #     Linear.IFEQ,  1,  0, Linear.IMMEDIATE,     # Execute next line if random value is 0
+    #     Linear.LOAD,  3,  2, Linear.CODE_INDIRECT, # Load temp value from MEM2
+    #     Linear.IFEQ,  1,  0, Linear.IMMEDIATE,     # Execute next line if random value is 0
+    #     Linear.STORE, 3,  2, Linear.MEM2_INDIRECT, # Store temp value into MEM2
+    #     Linear.ADD,   2,  1, Linear.IMMEDIATE,     # Increment copy pointer
+    # ],[
+    #     32, 32, 32, 32,
+    #     32, 32, 32, 32,
+    #     32, 32, 32, 32,
+    #     32, 32, 32, 32,
+    #     32, 32, 32, 32,
+    #     32, 32, 32, 32,
+    # ]]
+
+    ## Multiply ##
+    # code = [
+    #     [Linear.IFEQ, 2,  4, Linear.CODE_DIRECT],
+    #     [Linear.STOP, 2,  9, Linear.VARS_DIRECT],
+    #     [Linear.SUB,  2, 15, Linear.CODE_DIRECT],
+    #     [Linear.ADD,  3, 13, Linear.VARS_DIRECT],
+    # ]
+
+    ## Evolved Self Rep ##
+    # code = [
+    #     [Linear.SUB   ,  1 ,  3 , Linear.IMMEDIATE],
+    #     [Linear.LOAD  ,  2 ,  4 , Linear.MEM_INDIRECT],
+    #     [Linear.STORE ,  2 , 10 , Linear.OUT_INDIRECT],
+    #     # [Linear.IFEQ  ,  1 ,  8 , Linear.MEM_INDIRECT],
+    #     [Linear.SUB   ,  1 ,  3 , Linear.OUT_DIRECT],
+    # ]
+
+    ## One Point Crossover ##
     code = [[
         0, # PC
-        0, # Random value
         0, # Copy pointer
         0, # Temp
     ],[
-        Linear.RAND,  1,  1, Linear.VARS_DIRECT,   # Generate random value
-        Linear.IFEQ,  1,  0, Linear.IMMEDIATE,     # Execute next line if random value is 0
-        Linear.LOAD,  3,  2, Linear.CODE_INDIRECT, # Load temp value from MEM2
-        Linear.IFEQ,  1,  0, Linear.IMMEDIATE,     # Execute next line if random value is 0
-        Linear.STORE, 3,  2, Linear.MEM2_INDIRECT, # Store temp value into MEM2
-        Linear.ADD,   2,  1, Linear.IMMEDIATE,     # Increment copy pointer
-    ],[
-        32, 32, 32, 32,
-        32, 32, 32, 32,
-        32, 32, 32, 32,
-        32, 32, 32, 32,
-        32, 32, 32, 32,
-        32, 32, 32, 32,
-    ]]
+        Linear.IFEQ,  1,  0, Linear.IMMEDIATE,     # Check if copy pointer is 0
+        Linear.RAND,4*8,  1, Linear.VARS_DIRECT,   # Randomly move the copy pointer
+        Linear.LOAD,  2,  1, Linear.MEM2_INDIRECT, # Load temp value from MEM2
+        Linear.STORE, 2,  1, Linear.MEM3_INDIRECT, # Store temp value into MEM3
+        Linear.ADD,   1,  1, Linear.IMMEDIATE,     # Increment copy pointer
+        Linear.IFEQ,  1,4*8, Linear.IMMEDIATE,     # Check if copy pointer is at last position
+        Linear.STOP,  0,  0, Linear.IMMEDIATE,     # End execution
+    ],
+        [1] * 32,
+        [2] * 32,
+    ]
 
-    l = Linear(code)
-    l.run(6 * 4 * 6)
+    l = Linear(code, rand=True)
+    l.run(2)
+    print(l)
+    l.run(4000)
     print(l)
 
