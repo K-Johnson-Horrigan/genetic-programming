@@ -6,8 +6,7 @@ import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt
 
-from src.genetics import Linear, run_self_rep
-from src.genetics.tmgp import _run_maze_tm, maze_fitness
+from src.models import *
 from src.utils.save import load_kwargs, load_runs, load_pop, load_fits
 from src.utils.utils import cartesian_prod
 

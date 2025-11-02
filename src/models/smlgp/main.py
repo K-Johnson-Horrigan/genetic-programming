@@ -1,5 +1,5 @@
-from evolve import simulate_tests
-from genetics import *
+from src.evolve import simulate_tests
+from src.models.smlgp import *
 from src.utils.plot import plot_results
 from src.utils.save import load_runs, load_fits
 
@@ -67,7 +67,7 @@ kwargs = {
     'seed': None,
     'verbose': True,
     'parallelize': True,
-    'saves_path': '../saves/',  # Save path relative to this file
+    'saves_path': '../../../saves/smlgp/',  # Save path relative to this file
     ## Size ##
     'num_runs': 12,
     'num_gens': 100,

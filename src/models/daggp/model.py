@@ -240,7 +240,7 @@ class Node:
             self_index = self.index_in(parent)
             # Replace the parent's reference to self
             parent[self_index] = new_node
-        # Recalculate all links to parents
+        # Recalculate all links_adj to parents
         # This is because the original structure may still point to descendants of the original
         root.reset_parents()
         root.set_parents()

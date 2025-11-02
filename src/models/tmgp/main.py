@@ -1,7 +1,7 @@
-from evolve import simulate_tests
+from src.evolve import simulate_tests
 from src.utils.plot import plot_results
 from src.utils.save import load_runs, save_kwargs, load_kwargs
-from genetics import *
+from src.models.tmgp import *
 
 # kwargs = {
 #     'name': 'debug',
