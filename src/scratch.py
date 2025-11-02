@@ -1,5 +1,37 @@
 """File for testing ideas"""
 
+
+"""
+saves
+    [model]
+        [experiment]
+            data
+                [test]
+                    [seed]
+                        fits.npy
+                        pops.npy
+            plots
+            kwargs.json
+src
+    models
+        __init__.py
+        [model]
+            __init__.py
+            class.py
+            methods.py
+    utils
+        plot.py
+        save.py
+        utils.py
+    evolution
+        evolution.py
+"""
+
+
+
+
+
+
 import numpy as np
 
 # from main_lgp import *

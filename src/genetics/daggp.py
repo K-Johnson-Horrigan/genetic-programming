@@ -289,7 +289,7 @@ def xor_and_xor(*x): return (int(x[0]) ^ int(x[1])) & (int(x[2]) ^ int(x[3]))
 def const_32(x): return 32*x**2 + x
 def koza_3(x): return x**5 - 2*x**3 + x
 def bit_sum(x): return sum(int(i) for i in f'{int(x):04b}')
-
+def nate(x): return np.exp(-x*x/2) / np.sqrt(2 * np.pi)
 
 #
 # Initial pops

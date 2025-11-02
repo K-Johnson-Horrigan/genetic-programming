@@ -234,9 +234,9 @@ def plot_fitness(all_fits, ax=None, save=True, show=True, **kwargs):
         # y_std = np.std(np.min(all_fits[test], axis=2), axis=0)
         # ax.fill_between(x, y - y_std, y + y_std, alpha=0.2)
         # Scatter plot all points
-        xx = x.reshape((1,len(x),1)).repeat(all_fits.shape[1], axis=0).repeat(all_fits.shape[3], axis=2).ravel()
-        yy = all_fits[test].ravel()
-        plt.scatter(xx, yy, 0.1)
+        # xx = x.reshape((1,len(x),1)).repeat(all_fits.shape[1], axis=0).repeat(all_fits.shape[3], axis=2).ravel()
+        # yy = all_fits[test].ravel()
+        # plt.scatter(xx, yy, 0.1)
     # ax.set_yscale('log')
     ax.set_xlabel('Generation')
     plt.legend(title=kwargs['test_kwargs'][0][0])
@@ -264,9 +264,9 @@ def plot_mean_fitness(all_fits, ax=None, save=True, show=True, **kwargs):
         # y_std = np.std(np.min(all_fits[test], axis=2), axis=0)
         # ax.fill_between(x, y - y_std, y + y_std, alpha=0.2)
         # Scatter plot all points
-        xx = x.reshape((1,len(x),1)).repeat(all_fits.shape[1], axis=0).repeat(all_fits.shape[3], axis=2).ravel()
-        yy = all_fits[test].ravel()
-        plt.scatter(xx, yy, 0.1)
+        # xx = x.reshape((1,len(x),1)).repeat(all_fits.shape[1], axis=0).repeat(all_fits.shape[3], axis=2).ravel()
+        # yy = all_fits[test].ravel()
+        # plt.scatter(xx, yy, 0.1)
     # ax.set_yscale('log')
     ax.set_xlabel('Generation')
     plt.legend(title=kwargs['test_kwargs'][0][0])
@@ -493,13 +493,13 @@ def plot_results(all_fits, **kwargs):
 
     plot_fitness(all_fits, show=False, **kwargs)
 
-    plot_mean_fitness(all_fits, show=False, **kwargs)
+    # plot_mean_fitness(all_fits, show=False, **kwargs)
 
     # plot_means(np.vectorize(lambda x: len(x))(all_pops), 'Average Length', show=False, **kwargs)
     # plot_medians(np.vectorize(lambda x: len(x[0]))(all_pops), 'Average Number of Nodes')
     # plot_hist(np.vectorize(lambda x: len(x[0]))(all_pops), 'Average Number of Nodes')
 
-    plot_box(all_fits[:,:,-1], 'Final Fitness', show=False, **kwargs)
+    # plot_box(all_fits[:,:,-1], 'Final Fitness', show=False, **kwargs)
 
     # plot_grid(all_pops, all_fits, plot_func=plot_tm_maze, title='Best Solutions', show=False, **kwargs)
     # plot_grid(all_pops, all_fits, plot_func=plot_tm_graph, title='Best Graphs', show=False, **kwargs)
@@ -511,13 +511,19 @@ def plot_results(all_fits, **kwargs):
     for i, best in enumerate(bests):
         best_obj, best_fit = best
         test_name = kwargs['test_kwargs'][i+1][0]
-        print(f'Test: {test_name}, Fitness: {best_fit}')
-        table_best(best_obj, **kwargs)
 
-        l = Linear([[0,0,0,0], *best_obj])
+        # print(best_obj.simplify())
+        # print(best_obj.latex())
+        plot_nodes([best_obj], **kwargs)
 
+        plot
+
+        # print(f'Test: {test_name}, Fitness: {best_fit}')
+        # table_best(best_obj, **kwargs)
+
+        # l = Linear([[0,0,0,0], *best_obj])
         # l = run_self_rep(code_1d, **kwargs)
-        print(l)
+        # print(l)
         # l = run_self_rep(l.mem[2], **kwargs)
         # print(l)
 
@@ -527,6 +533,7 @@ def plot_results(all_fits, **kwargs):
 if __name__ == '__main__':
     # name = 'unstable_self_rep_0'
     name = 'random_self_rep_mult_0'
+    name = 'node_demo'
     kwargs = load_kwargs(name, '../../saves/')
     fits = load_fits(**kwargs)
     plot_results(fits, **kwargs)
