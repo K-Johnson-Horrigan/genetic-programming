@@ -4,7 +4,7 @@ Linear code is represented as a 2D arrays and converted to a Linear objects when
 """
 import numpy as np
 
-from model import Linear
+from src.models.smlgp.model import Linear
 from src.utils.utils import cartesian_prod
 
 

@@ -513,9 +513,9 @@ def plot_results(all_fits, **kwargs):
 
         # print(best_obj.simplify())
         # print(best_obj.latex())
-        plot_nodes([best_obj], **kwargs)
+        # plot_nodes([best_obj], **kwargs)
 
-        plot
+        # plot
 
         # print(f'Test: {test_name}, Fitness: {best_fit}')
         # table_best(best_obj, **kwargs)
@@ -530,9 +530,7 @@ def plot_results(all_fits, **kwargs):
 
 
 if __name__ == '__main__':
-    # name = 'unstable_self_rep_0'
-    name = 'random_self_rep_mult_0'
-    name = 'node_demo'
-    kwargs = load_kwargs(name, '../../saves/')
+    name = 'test_0'
+    kwargs = load_kwargs(name, '../../saves/network/')
     fits = load_fits(**kwargs)
     plot_results(fits, **kwargs)

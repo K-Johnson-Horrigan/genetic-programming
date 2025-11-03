@@ -5,9 +5,8 @@ DAGs are represented using the Node class.
 
 from scipy.optimize import minimize
 
-from src.genetics.classes.node import *
+from src.models.daggp.model import Node
 from src.utils.utils import choice
-
 
 #
 # Initialization Functions

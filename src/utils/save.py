@@ -58,7 +58,7 @@ def load_kwargs(name, saves_path):
                 obj[i] = string_to_func(item)
         elif type(obj) is type('') and obj.startswith(FUNC_PREFIX + '.'):
             # module = __import__(GP_FILE)
-            import src.genetics as module
+            import src.models as module
             return getattr(module, obj[len(FUNC_PREFIX) + 1:])
         return obj
     path = f'{saves_path}{name}/kwargs.json'

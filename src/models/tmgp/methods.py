@@ -5,7 +5,7 @@ Turing Machines are represented as 3D arrays and are converted to TM objects whe
 
 import numpy as np
 
-from src.genetics.classes.tm import TM
+from src.models.tmgp.model import TM
 from src.utils.utils import choice
 
 

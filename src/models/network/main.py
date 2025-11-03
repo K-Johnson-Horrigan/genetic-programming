@@ -1,4 +1,7 @@
+import numpy as np
+
 from src.evolve import simulate_tests
+from src.models.network.methods import *
 from src.utils.plot import plot_results
 from src.utils.save import load_runs, load_fits
 
@@ -7,19 +10,17 @@ kwargs = {
     'name': 'test_0',  # Name of folder to contain all results
     'seed': None,
     'verbose': True,
-    'parallelize': True,
+    'parallelize': not True,
     'saves_path': '../../../saves/network/',  # Save path relative to this file
     ## Size ##
-    'num_runs': 12,
+    'num_runs': 1,
     'num_gens': 100,
     'pop_size': 100,
     ## Initialization ##
-    'init_individual_func': random_code,  # Function used to generate a new organism
+    'channels': list(range(1,12)),
+    'init_individual_func': random_network,  # Function used to generate a new organism
     ## Evaluation ##
-    'fitness_func': lgp_rmse,
-    'target_func': multiply,  # The function that the organism is attempting to replicate across the domains
-    'domains': [list(range(0, 4)), list(range(0, 4))],  # Cases are generated from the Cartesian product
-    'timeout': 64,  # Number of evaluation iterations before forced termination
+    'fitness_func': total_interference,
     ## Selection ##
     'minimize_fitness': True,
     'keep_parents': 2,  # Elitism, must be even
@@ -27,20 +28,34 @@ kwargs = {
     ## Repopulation ##
     'crossover_funcs': [
         [two_point_crossover, 0.9],
-        # [self_crossover, 1.0],
     ],
     'mutate_funcs': [
         [point_mutation, 0.0],
     ],
     ## Tests ##
     'test_kwargs': [
-        ['Ops', 'ops'],
-        ['Normal', ('STOP', 'LOAD', 'STORE', 'ADD', 'SUB', 'IFEQ',)],
-        ['DEL', ('STOP', 'LOAD', 'STORE', 'ADD', 'SUB', 'IFEQ', 'DEL',)],
+        ['Channels', 'channels'],
+        ['11', list(range(11))],
+        ['ortho', (1,6,11)],
+        ['test', (1,2)],
     ],
 }
 
 if __name__ == '__main__':
+
+    # kwargs['rng'] = np.random.default_rng(2)
+
+    nodes, links = regular_topology()
+    kwargs = setup(nodes, links, **kwargs)
+    # kwargs['min_len'] = len(kwargs['links'])
+    # kwargs['max_len'] = len(kwargs['links'])
+
+    # org = random_network(**kwargs)
+    #
+    # h = fitness(org, **kwargs)
+    #
+    # pass
+
     simulate_tests(**kwargs)
     fits = load_fits(**kwargs)
     plot_results(fits, **kwargs)
