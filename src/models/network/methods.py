@@ -1,36 +1,35 @@
 """
 Genetic programming functions specifically for the evolution of completed graph models.
-Individuals are adjacency matrices of
 """
 import numpy as np
-
-i_c = [
-    [2, 1.125, 0.75, 0.375, 0.125, 0],
-    # [2, 0.625, 0.375, 0.125, 0],
-    # [2, 0.5, 0.375, 0.125, 0],
-]
 
 #
 # Problem Generation
 #
 
-def regular_topology(length=1, width=1):
+def regular_topology(shape):
 
-    nodes = [
-        [0, 0],
-        [0, 1],
-        [1, 0],
-        [1, 1],
-    ]
+    nodes = []
+    links = []
 
-    links = [
-        [0, 1],
-        [0, 2],
-        [3, 1],
-        [3, 2],
-    ]
+    for i in range(shape[0]):
+        for j in range(shape[1]):
+
+            node_id = len(nodes)
+            nodes.append((i,j))
+
+            if i > 0:
+                node_down = node_id - shape[0]
+                links.append((node_down, node_id))
+
+            if j > 0:
+                node_left = node_id - 1
+                links.append((node_left, node_id))
+
+
 
     return nodes, links
+
 
 def setup(nodes, links, **kwargs):
 
@@ -73,7 +72,7 @@ def setup(nodes, links, **kwargs):
         # dists[s2, s1] = dist
         dists.append(dist)
 
-        min_c_sep = min([c for c in range(6) if dist >= i_c[0][c]])
+        min_c_sep = min([c for c in range(6) if dist >= kwargs['i_c'][c]])
         min_c_seps.append(min_c_sep)
     kwargs['dists'] = np.array(dists)
     kwargs['min_c_seps'] = np.array(min_c_seps)

@@ -1,16 +1,14 @@
-import numpy as np
-
 from src.evolve import simulate_tests
-from src.models.network.methods import *
+from src.models.network import *
 from src.utils.plot import plot_results
-from src.utils.save import load_runs, load_fits
+from src.utils.save import load_fits
 
 
 kwargs = {
     'name': 'test_0',  # Name of folder to contain all results
     'seed': None,
     'verbose': True,
-    'parallelize': not True,
+    'parallelize': True,
     'saves_path': '../../../saves/network/',  # Save path relative to this file
     ## Size ##
     'num_runs': 1,
@@ -21,6 +19,9 @@ kwargs = {
     'init_individual_func': random_network,  # Function used to generate a new organism
     ## Evaluation ##
     'fitness_func': total_interference,
+    'i_c': [2, 1.125, 0.75, 0.375, 0.125, 0],  # 2M band
+    #'i_c': [2, 0.625, 0.375, 0.125, 0],  # 5.5M band
+    #'i_c': [2, 0.5, 0.375, 0.125, 0],  # 11M band
     ## Selection ##
     'minimize_fitness': True,
     'keep_parents': 2,  # Elitism, must be even
@@ -35,27 +36,18 @@ kwargs = {
     ## Tests ##
     'test_kwargs': [
         ['Channels', 'channels'],
-        ['11', list(range(11))],
-        ['ortho', (1,6,11)],
-        ['test', (1,2)],
+        ['All', list(range(11))],
+        ['Orthogonal', (1,6,11)],
+        ['1-6', (1,2,3,4,5,6)],
     ],
 }
 
+
 if __name__ == '__main__':
-
-    # kwargs['rng'] = np.random.default_rng(2)
-
-    nodes, links = regular_topology()
+    # Setup the problem TODO improve implementation of procedural problem setup
+    nodes, links = regular_topology((3,3))
     kwargs = setup(nodes, links, **kwargs)
-    # kwargs['min_len'] = len(kwargs['links'])
-    # kwargs['max_len'] = len(kwargs['links'])
-
-    # org = random_network(**kwargs)
-    #
-    # h = fitness(org, **kwargs)
-    #
-    # pass
-
+    # Run evolution
     simulate_tests(**kwargs)
     fits = load_fits(**kwargs)
     plot_results(fits, **kwargs)
