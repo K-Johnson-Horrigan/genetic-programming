@@ -120,6 +120,57 @@ def total_interference(pop, **kwargs):
     fits = np.array(fits)
     return fits
 
+def num_channel(pop, **kwargs):
+    """Fitness function based on max interference"""
+    num_channels = np.empty(len(pop))
+    for i,org in enumerate(pop):
+        num_channels[i] = len(np.unique(org))
+    num_channels = np.array(num_channels)
+    return num_channels
+
+def multi_obj_nsga_esque(pop, **kwargs): # not perfect nsga
+    """Fitness function based on the total and maximum interference"""
+    total_ints = total_interference(pop, **kwargs)
+    num_channels = num_channel(pop, **kwargs)
+    
+    ranks = np.empty(len(pop))
+    fronts = [[]]
+    dominated_sets = []
+    domination_counters = np.empty(len(pop))
+    
+    for i_p in range(len(pop)):
+        ds = []
+        domination_counter = 0
+
+        for i_q in range(len(pop)):
+            if((total_ints[i_p] >= total_ints[i_q] and num_channels[i_p] > num_channels[i_q]) or \
+               (total_ints[i_p] > total_ints[i_q] and num_channels[i_p] >= num_channels[i_q])):
+               ds.append(i_q) # p dominates q
+            elif(not (total_ints[i_p] == total_ints[i_q] and num_channels[i_p] == num_channels[i_q])): 
+                domination_counter += 1 # q dominates p
+
+        if domination_counter == 0: # p is undominated
+            ranks[i_p] = 1 # p is a 1-st rank solution
+            fronts[0].append(i_p)
+        
+        dominated_sets.append(ds)
+        domination_counters[i_p] = domination_counter
+    
+
+    i = 0
+    while fronts[i]:
+        Q = []
+        for i_p in fronts[i]:
+            for i_q in dominated_sets[i_q]:
+                domination_counters[i_q] -= 1
+                if(domination_counters[i_q] == 0):
+                    ranks[i_q] = i + 1
+                    if i_q not in Q: Q.append(i_q)
+        i += 1
+        if(i == len(fronts)):
+            fronts.append(Q)
+
+    return np.array(ranks)
 
 #
 # Crossover Functions
