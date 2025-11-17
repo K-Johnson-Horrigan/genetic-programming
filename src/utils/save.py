@@ -29,7 +29,7 @@ def save_kwargs(**kwargs):
             return f'{FUNC_PREFIX}.{obj.__name__}'
         else:
             return obj
-    kwargs_path = f'{kwargs['saves_path']}{kwargs['name']}/'
+    kwargs_path = f"{kwargs['saves_path']}{kwargs['name']}/"
     os.makedirs(kwargs_path, exist_ok=True)
     print(f'Saving kwargs to {kwargs_path}kwargs.json')
     with open(kwargs_path + 'kwargs.json', 'w') as f:
@@ -77,7 +77,7 @@ def load_runs(**kwargs):
     for test in tests:
         pops.append([])
         fits.append([])
-        test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test}/*/'
+        test_path = f"{kwargs['saves_path']}{kwargs['name']}/data/{test}/*/"
         for run_file_name in glob.glob(test_path):
             print(f'Loading run from {run_file_name}')
             pops[-1].append(np.load(run_file_name+'pops.npy', allow_pickle=True))
@@ -94,7 +94,7 @@ def load_fits(**kwargs):
     test_names = [test[0] for test in kwargs['test_kwargs'][1:]]
     for test_name in test_names:
         fits.append([])
-        test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/'
+        test_path = f"{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/"
         for run_file_name in sorted(glob.glob(test_path)):
             print(f'Loading fitness from {run_file_name}')
             fits[-1].append(np.load(run_file_name+'fits.npy'))
@@ -108,7 +108,7 @@ def load_pops(test, run, **kwargs):
     test_names = [test[0] for test in kwargs['test_kwargs'][1:]]
     for test_name in test_names:
         pops.append([])
-        test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/'
+        test_path = f"{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/"
         for run_file_name in glob.glob(test_path):
             print(f'Loading run from {run_file_name}')
             pops[-1].append(np.load(run_file_name+'pops.npy', allow_pickle=True))
@@ -121,7 +121,7 @@ def load_pops(test, run, **kwargs):
 def load_pop(test, run, **kwargs):
     """Returns a 4D array of all individuals and fitness values"""
     test_name = kwargs['test_kwargs'][1:][test][0]
-    test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/'
+    test_path = f"{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/"
     run_file_name = sorted(glob.glob(test_path))[run]
     print(f'Loading population from {run_file_name}')
     pop = np.load(run_file_name+'pops.npy', allow_pickle=True)
