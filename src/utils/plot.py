@@ -27,8 +27,8 @@ def plot_fitness(all_fits, ax=None, save=True, show=True, **kwargs):
             y = np.mean(np.max(all_fits[test], axis=2), axis=0)
             ax.set_ylabel('Average Max Fitness Value')
         plt.plot(x, y, label=kwargs['test_kwargs'][test + 1][0])
-        # y_std = np.std(np.min(all_fits[test], axis=2), axis=0)
-        # ax.fill_between(x, y - y_std, y + y_std, alpha=0.2)
+        y_std = np.std(np.min(all_fits[test], axis=2), axis=0)
+        ax.fill_between(x, y - y_std, y + y_std, alpha=0.2)
         # Scatter plot all points
         # xx = x.reshape((1,len(x),1)).repeat(all_fits.shape[1], axis=0).repeat(all_fits.shape[3], axis=2).ravel()
         # yy = all_fits[test].ravel()
@@ -302,7 +302,7 @@ def plot_results(all_fits, **kwargs):
     # plot_grid(all_pops, all_fits, plot_func=plot_trans_array, title='Best Transition Arrays', show=False, **kwargs)
     # plot_grid(all_pops, all_fits, plot_func=plot_fitness, title='Best Solutions', show=False, **kwargs)
 
-    plot_network(**kwargs)
+    plot_network_problem(**kwargs)
 
     # Plot best results of each test
     bests = zip(*get_best(all_fits, **kwargs))
@@ -310,6 +310,7 @@ def plot_results(all_fits, **kwargs):
         best_obj, best_fit = best
         test_name = kwargs['test_kwargs'][i+1][0]
 
+        plot_network(org=best_obj, title=test_name, **kwargs)
 
         # print(best_obj.simplify())
         # print(best_obj.latex())
@@ -330,7 +331,7 @@ def plot_results(all_fits, **kwargs):
 
 
 if __name__ == '__main__':
-    name = 'test_0'
+    name = 'test_10x10'
     kwargs = load_kwargs(name, '../../saves/network/')
     fits = load_fits(**kwargs)
     plot_results(fits, **kwargs)

@@ -5,16 +5,16 @@ from src.utils.save import load_fits
 
 
 kwargs = {
-    'name': 'test_2',  # Name of folder to contain all results
+    'name': '10x10_drop_center',  # Name of folder to contain all results
     'seed': None,
     'verbose': True,
     'parallelize': True,
     'saves_path': '../../../saves/network/',  # Save path relative to this file
     ## Size ##
     'num_runs': 12,
-    'num_gens': 10,
-    'pop_size': 10,
-    'network_shape': (20,20),
+    'num_gens': 1000,
+    'pop_size': 100,
+    'network_shape': (10,10),
     ## Initialization ##
     'channels': list(range(1,12)),
     'init_individual_func': random_network,  # Function used to generate a new organism
@@ -33,8 +33,11 @@ kwargs = {
         [two_point_crossover, 0.9],
     ],
     'mutate_funcs': [
-        [point_mutation, 0],
+        [point_mutation, 0.7],
     ],
+    ## Other ##
+    'nodes_removed_gen': 500,  # Remove the following nodes on the given generation
+    'nodes_removed': [22, 27, 72, 77],  # Remove all nodes in the list (12 is the center node in a 5x5 grid)
     ## Tests ##
     # 'test_kwargs': [
     #     ['Channels', 'channels'],
@@ -44,12 +47,8 @@ kwargs = {
     # ],
     'test_kwargs': [
         ['Crossover', 'crossover_funcs', 'subgraph_crossover_p_branch'],
-        ['BFS Two Point', [[bfs_two_point_crossover, 0.7]], 0],
-        ['Subgraph 0.25', [[subgraph_crossover, 0.7]], 0.25],
-        ['Subgraph 0.5', [[subgraph_crossover, 0.7]], 0.5],
-        ['Subgraph 0.75', [[subgraph_crossover, 0.7]], 0.75],
-        # ['Two Point', [[two_point_crossover, 0.7]]],
-        # ['One Point', [[one_point_crossover, 0.7]]],
+        ['BFS Two-Point', [[bfs_two_point_crossover, 0.7]], 0],
+        ['Subgraph', [[subgraph_crossover, 0.7]], 0.5],
     ],
 }
 

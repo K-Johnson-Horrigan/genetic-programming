@@ -7,6 +7,7 @@ from multiprocessing import Pool, cpu_count
 
 import numpy as np
 
+from src.models import remove_node
 from src.utils.save import save_kwargs, save_run
 
 #
@@ -131,17 +132,19 @@ def simulate_run(**kwargs):
     all_fits = np.empty(shape)
 
     pop = init_pop(**kwargs)
-    # all_pops[0] = [n.to_lists() for n in pop]
     all_pops[0] = pop
-
-    # for indiv in pop: indiv.prev_fit = 0
 
     # Loop level 2
     for generation in range(kwargs['num_gens']):
-        if kwargs['verbose'] > 0 and generation % 1 == 0:
 
-            # print(f'\tGeneration {generation} of {kwargs["num_gens"]}')
+        if kwargs['verbose'] > 0 and generation % 1 == 0:
             print(f'Simulating Test {kwargs["test_name"]}, Run {kwargs["seed"]}, Generation {generation} of {kwargs["num_gens"]}')
+
+        # Remove node
+        if generation == kwargs['nodes_removed_gen']:
+            for node_index in kwargs['nodes_removed']:
+                print(f'Removing node {node_index}')
+                kwargs['interf_mask'] = remove_node(node_index, **kwargs)
 
         # Next generation and previous fitness
         pop, fit = next_pop(pop=pop, **kwargs)
