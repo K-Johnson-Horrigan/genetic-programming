@@ -142,43 +142,54 @@ def num_channel(pop, **kwargs):
     num_channels = np.array(num_channels)
     return num_channels
 
+def max_interference(pop, **kwargs):
+    """Fitness function based on max interference"""
+    fits = np.empty(len(pop))
+    for i,org in enumerate(pop):
+        fit = np.abs(org[kwargs['interf'][:,0]] - org[kwargs['interf'][:,1]]) # distances
+        fit = kwargs['min_c_seps'] - fit # if 0 or negative, distance is sufficient to avoid interference
+        best = np.max(fit)
+        fits[i] = best if best > 0 else 0
+    return(np.array(fits))
+
 def multi_obj_nsga_esque(pop, **kwargs): # not perfect nsga
     """Fitness function based on the total and maximum interference"""
-    total_ints = total_interference(pop, **kwargs)
-    num_channels = num_channel(pop, **kwargs)
-    
+
+    obj_1 = total_interference(pop, **kwargs)
+    obj_2 = max_interference(pop, **kwargs)
     ranks = np.empty(len(pop))
+   
     fronts = [[]]
     dominated_sets = []
     domination_counters = np.empty(len(pop))
-    
+
     for i_p in range(len(pop)):
         ds = []
         domination_counter = 0
 
         for i_q in range(len(pop)):
-            if((total_ints[i_p] >= total_ints[i_q] and num_channels[i_p] > num_channels[i_q]) or \
-               (total_ints[i_p] > total_ints[i_q] and num_channels[i_p] >= num_channels[i_q])):
+            if((obj_1[i_p] <= obj_1[i_q] and obj_2[i_p] < obj_2[i_q]) or \
+               (obj_1[i_p] < obj_1[i_q] and obj_2[i_p] <= obj_2[i_q])): # minimize
                ds.append(i_q) # p dominates q
-            elif(not (total_ints[i_p] == total_ints[i_q] and num_channels[i_p] == num_channels[i_q])): 
+            elif((obj_1[i_q] <= obj_1[i_p] and obj_2[i_q] < obj_2[i_p]) or \
+                 (obj_1[i_q] < obj_1[i_p] and obj_2[i_q] <= obj_2[i_p])):
                 domination_counter += 1 # q dominates p
 
         if domination_counter == 0: # p is undominated
             ranks[i_p] = 1 # p is a 1-st rank solution
             fronts[0].append(i_p)
-        
+
         dominated_sets.append(ds)
         domination_counters[i_p] = domination_counter
-    
 
     i = 0
     while fronts[i]:
         Q = []
         for i_p in fronts[i]:
-            for i_q in dominated_sets[i_q]:
+            for i_q in dominated_sets[i_p]:
                 domination_counters[i_q] -= 1
                 if(domination_counters[i_q] == 0):
-                    ranks[i_q] = i + 1
+                    ranks[i_q] = i + 2
                     if i_q not in Q: Q.append(i_q)
         i += 1
         if(i == len(fronts)):
