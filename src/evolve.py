@@ -77,6 +77,11 @@ def next_pop(pop, **kwargs):
         # Evaluation
         kwargs['fits'] = kwargs['fitness_func'](**kwargs)
 
+        # Grab desired data
+        if(kwargs['track_extra_data']):
+            kwargs['data_1_vals'] = kwargs['data_1_source'](**kwargs)
+            kwargs['data_2_vals'] = kwargs['data_2_source'](**kwargs)
+
         # Elitism
         pool = [(kwargs['fits'][i], i) for i in range(kwargs['pop_size'])]
         pool = sorted(pool)
@@ -109,7 +114,7 @@ def next_pop(pop, **kwargs):
             new_pop.append(org_0)
             new_pop.append(org_1)
 
-        return new_pop, kwargs['fits']
+        return new_pop, kwargs['fits'], kwargs['data_1_vals'], kwargs['data_2_vals']
 
 
 def simulate_run(**kwargs):
@@ -133,6 +138,9 @@ def simulate_run(**kwargs):
 
     pop = init_pop(**kwargs)
     all_pops[0] = pop
+    
+    extra_data_1 = np.empty(shape) # make this a list at some point
+    extra_data_2 = np.empty(shape)
 
     # Loop level 2
     for generation in range(kwargs['num_gens']):
@@ -147,17 +155,26 @@ def simulate_run(**kwargs):
                 kwargs['interf_mask'] = remove_node(node_index, **kwargs)
 
         # Next generation and previous fitness
-        pop, fit = next_pop(pop=pop, **kwargs)
+        pop, fit, d1, d2 = next_pop(pop=pop, **kwargs)
 
         # Save results
         # all_pops[generation + 1] = [n.to_lists() for n in pop]
         all_pops[generation + 1] = pop
         all_fits[generation] = fit
 
+        # extra data tracking
+        if(kwargs['track_extra_data']):
+            extra_data_1[generation] = d1
+            extra_data_2[generation] = d2
+
     # Final fitness values
     all_fits[-1] = kwargs['fitness_func'](pop, is_final=True, **kwargs)
 
-    return all_pops, all_fits
+    # extra data tracking
+    if(kwargs['track_extra_data']):
+        extra_data_1[-1] = kwargs['data_1_source'](pop, is_final=True, **kwargs)
+        extra_data_2[-1] = kwargs['data_2_source'](pop, is_final=True, **kwargs)
+    return all_pops, all_fits, [extra_data_1, extra_data_2]
 
 
 def _simulate_and_save_test_run(test_num, run_num, test_kwargs, base_kwargs):
@@ -182,8 +199,8 @@ def _simulate_and_save_test_run(test_num, run_num, test_kwargs, base_kwargs):
     kwargs['rng'] = np.random.default_rng(kwargs['seed'])
 
     # Run simulation and save
-    pops, fits = simulate_run(test_name=test_name, **kwargs)
-    save_run(test_path, pops, fits, **kwargs)
+    pops, fits, extra_data = simulate_run(test_name=test_name, **kwargs)
+    save_run(test_path, pops, fits, extra_data, **kwargs)
 
 
 def simulate_tests(num_runs, test_kwargs, **kwargs):

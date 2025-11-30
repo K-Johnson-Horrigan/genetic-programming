@@ -36,7 +36,7 @@ def save_kwargs(**kwargs):
         json.dump(func_to_string(kwargs.copy()), f, indent=4)
 
 
-def save_run(test_path, pops, fits, **kwargs):
+def save_run(test_path, pops, fits, extra_data, **kwargs):
     # Each test is saved in its own directory which is passed through the path
     os.makedirs(test_path, exist_ok=True)
     test_path = f'{test_path}/{kwargs["seed"]}/'
@@ -45,6 +45,15 @@ def save_run(test_path, pops, fits, **kwargs):
     np.save(test_path + 'pops', pops)
     np.save(test_path + 'fits', fits)
 
+    pops.tofile(test_path + 'pops.csv', sep = ',')
+    np.array([','.join(map(str,fit)) for fit in fits]).tofile(test_path + 'fits.csv', sep = '\n')
+
+    if(kwargs['track_extra_data']):
+        if(len(extra_data) == 0): print("ERROR with extra data")
+
+        np.array([','.join(map(str,fit)) for fit in extra_data[0]]).tofile(test_path + 'total_inter.csv', sep = '\n')
+        np.array([','.join(map(str,fit)) for fit in extra_data[1]]).tofile(test_path + 'max_inter.csv', sep = '\n')
+    
 
 def load_kwargs(name, saves_path):
     FUNC_PREFIX = 'src.genetics'
