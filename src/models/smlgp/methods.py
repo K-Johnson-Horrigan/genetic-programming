@@ -15,25 +15,30 @@ from src.utils.utils import cartesian_prod
 def _random_line(**kwargs):
     """Helper function to generating a single line of code"""
     return [
-        kwargs['rng'].choice(kwargs['ops']),
+        # kwargs['rng'].choice(kwargs['ops']),
+        kwargs['rng'].integers(kwargs['max_value']),
         kwargs['rng'].integers(kwargs['max_len']),
         kwargs['rng'].integers(kwargs['max_value']),
-        kwargs['rng'].integers(1+2*len(kwargs['mem_lens'])),
+        # kwargs['rng'].integers(1+2*len(kwargs['mem_lens'])),
+        kwargs['rng'].integers(3),
     ]
 
-def random_code(**kwargs):
+
+def random_mem(**kwargs):
     """Generate a random list of transitions"""
-    init_len = kwargs['rng'].integers(kwargs['init_min_len'], kwargs['init_max_len']+1)
+    init_len = kwargs['rng'].integers(kwargs['init_min_len']//Linear.LINE_LENGTH, kwargs['init_max_len']//Linear.LINE_LENGTH+1)
     code = [_random_line(**kwargs) for _ in range(init_len)]
-    code = [sum(code, [])]
+    code = sum(code, [])  # Flatten list of lists
     return code
 
-def random_2d_code(**kwargs):
+
+def random_mems(**kwargs):
+    """Generate a random list of mems"""
     code = []
     for i in range(len(kwargs['init_max_lens'])):
         init_min_len = kwargs['init_min_lens'][i]
         init_max_len = kwargs['init_min_lens'][i]
-        code.append(random_code(init_min_len=init_min_len, init_max_len=init_max_len, **kwargs))
+        code.append(random_mem(init_min_len=init_min_len, init_max_len=init_max_len, **kwargs))
     return code
 
 # def random_code(**kwargs):
@@ -101,24 +106,6 @@ def self_rep(pop, **kwargs):
         fit = sum(code_1d != l.mem[2])
         fits[i] = fit
     return fits
-
-
-# def unstable_self_rep(pop, **kwargs):
-#     """Calculate the fitness value of all individuals in a population"""
-#     fits = np.empty(len(pop))
-#     for i,code in enumerate(pop):
-#         code_1d = np.ravel(code)
-#         l0 = run_self_rep(code, **kwargs)
-#         out_code = np.array(l0.out).reshape(-1,4).tolist()
-#         out_code_1d = np.ravel(out_code)
-#         l1 = run_self_rep(out_code, **kwargs)
-#
-#         fit = sum((code_1d == l0.out) & (code_1d != 0))
-#         fit += sum((out_code_1d == l1.out) & (out_code_1d != 0))
-#         if (code_1d == out_code_1d).all():
-#             fit = 0
-#         fits[i] = fit
-#     return fits
 
 
 # def self_mutate(pop, **kwargs):
@@ -229,6 +216,123 @@ def lgp_self_rep_rmse(pop, target_func, domains, **kwargs):
         fits[i] = (sum((abs(y_target - y_actual)) ** 2) / len(cases)) ** 0.5
     return fits
 
+
+# def _smlgp_nim(org0, org1, **kwargs):
+#
+#     #
+#     a = Linear([[0,21,0],org0])
+#     a.run(kwargs['timeout'])
+#     da = a.mem[0][]
+#
+#     b = Linear([[0,0],org1])
+
+def _check_sylver_coinage(n , played_values):
+    
+    # Invalid by the definition of the game
+    if n <= 1:
+        return False
+    # No previous moves
+    elif not played_values:
+        return True
+
+    # Dynamic programming to test representability
+    reachable = [False] * (n + 1)
+    reachable[0] = True
+
+    for i in range(1, n + 1):
+        for a in played_values:
+            if i - a >= 0 and reachable[i - a]:
+                reachable[i] = True
+                break
+
+    # Move is invalid if n is in the semigroup
+    return not reachable[n]
+
+
+
+
+
+
+
+
+
+
+
+def _smlgp_sylver_coinage(org0, org1, **kwargs):
+
+    num_turns = kwargs['num_turns']
+
+    played_numbers = [0] * (num_turns * 2)
+    # played_numbers = [0] * (num_turn
+
+    # Initialize organism a
+    a = Linear([[0] + played_numbers, org0], valid_ops=kwargs['ops'])
+    # Initialize organism b
+    b = Linear([[0] + played_numbers, org1], valid_ops=kwargs['ops'])
+
+    for turn in range(0, num_turns, 2):
+
+        # Update memory of played values
+        a.mem[0] = [0] + [0] + played_numbers
+        a.regs = a.mem[0]
+
+        # Run until timeout
+        a.run(kwargs['timeout'])
+        # Extract final value played by a
+        a_played = a.mem[0][1]
+        print(a_played)
+
+        # Check if the value is valid and save it
+        if _check_sylver_coinage(a_played, played_numbers):
+            # played_numbers.append(a_played)
+            played_numbers[turn] = a_played
+        else:
+            return 0, turn
+
+        turn += 1
+
+        # Update memory of played values
+        b.mem[0] = [0] + [0] + played_numbers
+        b.regs = b.mem[0]
+        # Run until timeout
+        b.run(kwargs['timeout'])
+        # Extract final value played by a
+        b_played = b.mem[0][1]
+        print(b_played)
+
+        # Check if the value is valid and save it
+        if _check_sylver_coinage(b_played, played_numbers):
+            # played_numbers.append(b_played)
+            played_numbers[turn] = b_played
+        else:
+            return turn, 0
+
+    return num_turns+1, num_turns+1
+
+
+def smlgp_compete(pop, **kwargs):
+    """Randomly compete each organism against another organism"""
+
+    shuffle_map = np.arange(len(pop))
+    kwargs['rng'].shuffle(shuffle_map)
+    fits = np.empty(len(pop))
+
+    for i in range(0, len(pop), 2):
+
+        index0 = shuffle_map[i]
+        index1 = shuffle_map[i+1]
+        org0 = pop[index0]
+        org1 = pop[index1]
+
+        fit0, fit1 = _smlgp_sylver_coinage(org0, org1, **kwargs)
+
+        fits[index0] = fit0
+        fits[index1] = fit1
+
+    return fits
+
+
+
 #
 # Target Functions
 #
@@ -300,15 +404,25 @@ def self_crossover(a,b,**kwargs):
 # Mutation Functions
 #
 
+# def point_mutation(code, **kwargs):
+#     """Randomly change a value in a random line"""
+#     # Duplicate the original
+#     code = [line.copy() for line in code]
+#     # Select a random line and sub line
+#     index = kwargs['rng'].integers(len(code))
+#     sub_index = kwargs['rng'].integers(4)
+#     # Replace the argument
+#     code[index][sub_index] = _random_line(**kwargs)[sub_index]
+#     return code
+
 def point_mutation(code, **kwargs):
     """Randomly change a value in a random line"""
     # Duplicate the original
-    code = [line.copy() for line in code]
+    code_copy = code.copy()
     # Select a random line and sub line
     index = kwargs['rng'].integers(len(code))
-    sub_index = kwargs['rng'].integers(4)
     # Replace the argument
-    code[index][sub_index] = _random_line(**kwargs)[sub_index]
+    code[index] = kwargs['rng'].integers(kwargs['max_value'])
     return code
 
 
@@ -318,3 +432,53 @@ def point_mutation(code, **kwargs):
 
 if __name__ == '__main__':
     pass
+
+    org =  [8,  4,  3,  0 ,
+11,  0,  0, 13 ,
+ 4, 13, 10,  1 ,
+ 4, 15,  1,  8 ,
+ 9,  1, 12, 13 ,
+ 3, 13,  9,  1 ,
+14, 13,  3, 13 ,
+11, 11,  6,  3 ,
+ 4, 13,  4,  0 ,
+ 9, 14,  1, 10 ,
+ 4,  3, 244,  7,
+13,  0, 13,  5 ,
+ 7,  4, 13, 10 ,
+ 8,  6, 13,  0 ,
+ 7, 10,  1,  1 ,
+35, 13,  0, 11]
+
+
+    a = _check_sylver_coinage(16, [7])
+
+    print(a)
+
+    # prevs = [
+    #     [5],
+    #     [5,4],
+    #     [5,4,11],
+    #     [5,4,11,6],
+    #     [5,4,11,6,7],
+    #     [5,4,11,6,7,2],
+    #     [5,4,11,6,7,2,3],
+    # ]
+    #
+    # ns = range(15)
+    #
+    # vss = []
+    # for prev in prevs:
+    #     vs = []
+    #     for n in ns:
+    #         s = _check_sylver_coinage(n, prev)
+    #         vs.append(n * s)
+    #     vss.append(vs)
+    #
+    # # prev = [5]
+    # # n = 10
+    # # a = _check_sylver_coinage(n, prev)
+    #
+    # vss = np.array(vss, int)
+    #
+    # print(vss)

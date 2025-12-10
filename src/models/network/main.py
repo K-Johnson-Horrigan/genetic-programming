@@ -5,16 +5,16 @@ from src.utils.save import load_fits
 
 
 kwargs = {
-    'name': '10x10_drop_center',  # Name of folder to contain all results
+    'name': '5x5_mini',  # Name of folder to contain all results
     'seed': None,
     'verbose': True,
     'parallelize': True,
     'saves_path': '../../../saves/network/',  # Save path relative to this file
     ## Size ##
-    'num_runs': 12,
+    'num_runs': 20,
     'num_gens': 1000,
     'pop_size': 100,
-    'network_shape': (10,10),
+    'network_shape': (5,5),
     ## Initialization ##
     'channels': list(range(1,12)),
     'init_individual_func': random_network,  # Function used to generate a new organism
@@ -36,8 +36,9 @@ kwargs = {
         [point_mutation, 0.7],
     ],
     ## Other ##
-    'nodes_removed_gen': 500,  # Remove the following nodes on the given generation
+    'nodes_removed_gen': -1000,  # Remove the following nodes on the given generation
     'nodes_removed': [22, 27, 72, 77],  # Remove all nodes in the list (12 is the center node in a 5x5 grid)
+    # 'nodes_removed': [12],  # Remove all nodes in the list (12 is the center node in a 5x5 grid)
     ## Tests ##
     # 'test_kwargs': [
     #     ['Channels', 'channels'],

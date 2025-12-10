@@ -26,7 +26,7 @@ def init_pop(pop_size, init_individual_func, **kwargs):
 def tournament_selection(pop, fits, k, **kwargs):
     """Select a single parent from a tournament of k"""
     # Select the random tournament
-    tourn_indices = kwargs['rng'].choice(len(pop), size=2, replace=False)
+    tourn_indices = kwargs['rng'].choice(len(pop), size=k, replace=False)
     tourn = [pop[i] for i in tourn_indices]
     # Created a zipped list of fitness and chromosomes
     parent = [(fits[i], i) for i in range(k)]
@@ -149,7 +149,7 @@ def simulate_run(**kwargs):
             print(f'Simulating Test {kwargs["test_name"]}, Run {kwargs["seed"]}, Generation {generation} of {kwargs["num_gens"]}')
 
         # Remove node
-        if generation == kwargs['nodes_removed_gen']:
+        if generation == kwargs.get('nodes_removed_gen'):
             for node_index in kwargs['nodes_removed']:
                 print(f'Removing node {node_index}')
                 kwargs['interf_mask'] = remove_node(node_index, **kwargs)
