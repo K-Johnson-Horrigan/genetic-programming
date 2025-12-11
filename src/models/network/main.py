@@ -9,9 +9,9 @@ kwargs = {
     'seed': None,
     'verbose': True,
     'parallelize': True,
-    'saves_path': '../../../saves/network/',  # Save path relative to this file
+    'saves_path': 'saves/network/',  # Save path relative to this file
     ## Size ##
-    'num_runs': 20,
+    'num_runs': 1,
     'num_gens': 1000,
     'pop_size': 100,
     'network_shape': (5,5),
@@ -35,6 +35,10 @@ kwargs = {
     'mutate_funcs': [
         [point_mutation, 0.7],
     ],
+    ## data
+    'track_extra_data': True,
+    'data_1_source': total_interference,
+    'data_2_source': max_interference,
     ## Other ##
     'nodes_removed_gen': -1000,  # Remove the following nodes on the given generation
     'nodes_removed': [22, 27, 72, 77],  # Remove all nodes in the list (12 is the center node in a 5x5 grid)
