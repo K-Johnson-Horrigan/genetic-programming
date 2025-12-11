@@ -1,3 +1,8 @@
+import os
+import sys
+script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
+sys.path.append(script_directory[:-18])
+
 from src.evolve import simulate_tests
 from src.models.network import *
 from src.utils.plot import plot_results
