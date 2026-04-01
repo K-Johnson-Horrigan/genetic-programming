@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt, patches
 
 from src.models import router_adj_mat, coverage_arr
 from src.models.wmn import cov_con_entropy_fitness
-from src.utils.save import load_kwargs, load_pop, load_fits, load_seed, load_pops, load_seeds
+from src.utils.save import load_kwargs, load_pop, load_fits, load_seed, load_pops, load_seeds, load_extra_1, load_extra_2
 from src.utils.utils import cartesian_prod
 
 #
@@ -177,9 +177,12 @@ def plot_results(all_fits, **kwargs):
     path = f'{kwargs["saves_path"]}{kwargs["name"]}/plots/'
     os.makedirs(path, exist_ok=True)
     print('Plotting results')
-
+    
+    if(kwargs['extra_data']):
+        plot_extra_1(load_extra_1(**kwargs), **kwargs)
+        plot_extra_2(load_extra_2(**kwargs), **kwargs)
     plot_fitness(all_fits, show=True, **kwargs)
-
+    
 
 
     # Recalculate fitness using alternate fitness function
@@ -217,7 +220,41 @@ def plot_results(all_fits, **kwargs):
         plot_network(best_org, save=title, **kwargs)
 
 
+def plot_extra_1(extra_1, **kwargs):
+    """Plot the average of the runs' max extra_1 for each test"""
+    show=True
+    save='extra_data_1'
+    fig, ax = plt.subplots()
+    x = np.array(range(extra_1.shape[2]))
+    for test in range(extra_1.shape[0]):
+        y = np.mean(np.max(extra_1[test], axis=2), axis=0)
+        ax.set_ylabel('Mean max connectivity')
+        plt.plot(x, y, label=kwargs['test_kwargs'][test + 1][0])
+    ax.set_xlabel('Generation')
+    plt.legend(title=kwargs['test_kwargs'][0][0])
+    if save:
+        plt.savefig(f'{kwargs["saves_path"]}{kwargs["name"]}/plots/{save}.png')
+    if show:
+        plt.show()
+    plt.close()
 
+def plot_extra_2(extra_2, **kwargs):
+    """Plot the average of the runs' max extra_2 for each test"""
+    show=True
+    save='extra_data_2'
+    fig, ax = plt.subplots()
+    x = np.array(range(extra_2.shape[2]))
+    for test in range(extra_2.shape[0]):
+        y = np.mean(np.max(extra_2[test], axis=2), axis=0)
+        ax.set_ylabel('Mean max coverage')
+        plt.plot(x, y, label=kwargs['test_kwargs'][test + 1][0])
+    ax.set_xlabel('Generation')
+    plt.legend(title=kwargs['test_kwargs'][0][0])
+    if save:
+        plt.savefig(f'{kwargs["saves_path"]}{kwargs["name"]}/plots/{save}.png')
+    if show:
+        plt.show()
+    plt.close()
 
 if __name__ == '__main__':
     name = 'fitness_0'

@@ -45,6 +45,16 @@ def save_run(test_path, pops, fits, **kwargs):
     np.save(test_path + 'pops', pops)
     np.save(test_path + 'fits', fits)
 
+def save_run_verbose(test_path, pops, fits, extra_1, extra_2, **kwargs):
+    # Each test is saved in its own directory which is passed through the path
+    os.makedirs(test_path, exist_ok=True)
+    test_path = f'{test_path}/{kwargs["seed"]}/'
+    print(f'Saving run to {test_path}')
+    os.makedirs(test_path, exist_ok=True)
+    np.save(test_path + 'pops', pops)
+    np.save(test_path + 'fits', fits)
+    np.save(test_path + 'extra_1', extra_1)
+    np.save(test_path + 'extra_2', extra_2)
 
 def load_kwargs(name, saves_path):
     FUNC_PREFIX = 'src.genetics'
@@ -101,6 +111,31 @@ def load_fits(**kwargs):
     fits = np.array(fits)
     return fits
 
+def load_extra_1(**kwargs):
+    """Returns a 4D array of all individuals and extra_1 values"""
+    fits = []
+    test_names = [test[0] for test in kwargs['test_kwargs'][1:]]
+    for test_name in test_names:
+        fits.append([])
+        test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/'
+        for run_file_name in sorted(glob.glob(test_path)):
+            print(f'Loading extra 1 from {run_file_name}')
+            fits[-1].append(np.load(run_file_name+'extra_1.npy'))
+    fits = np.array(fits)
+    return fits
+
+def load_extra_2(**kwargs):
+    """Returns a 4D array of all individuals and extra_2 values"""
+    fits = []
+    test_names = [test[0] for test in kwargs['test_kwargs'][1:]]
+    for test_name in test_names:
+        fits.append([])
+        test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/'
+        for run_file_name in sorted(glob.glob(test_path)):
+            print(f'Loading extra 2 from {run_file_name}')
+            fits[-1].append(np.load(run_file_name+'extra_2.npy'))
+    fits = np.array(fits)
+    return fits
 
 def load_pops(**kwargs):
     """Returns a 4D array of all individuals and fitness values"""

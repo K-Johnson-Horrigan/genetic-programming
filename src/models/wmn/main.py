@@ -5,8 +5,8 @@ sys.path.append(script_directory[:-14])
 
 from src.evolve import simulate_tests
 from src.models.wmn import *
-from src.models.wmn.plot import plot_results
-from src.utils.save import load_fits
+from src.models.wmn.plot import plot_results, plot_extra_1
+from src.utils.save import load_fits, load_extra_1
 
 kwargs = {
     'name': 'example_8',  # Name of folder to contain all results
@@ -28,11 +28,17 @@ kwargs = {
     ## Initialization ##
     'init_individual_func': random_uniform_router_coords,  # Function used to generate a new organism
     ## Evaluation ##
-    'fitness_func': cov_con_sum_fitness,
+    'fitness_func': lexicase_fitness,
+    'epsilon': 0,
     ## Selection ##
     'minimize_fitness': False,
     'keep_parents': 2,  # Elitism, must be even
     'k': 2,  # Number of randomly chosen parents for each tournament
+    ## Extra data collection ##
+    'extra_data': True,
+    'extra_data_1': get_con_vals,
+    'extra_data_2': get_cov_vals,
+
     ## Repopulation ##
     'crossover_funcs': [
         [coords_two_point_crossover, 0.8],
@@ -102,6 +108,3 @@ if __name__ == '__main__':
     simulate_tests(**kwargs)
     fits = load_fits(**kwargs)
     plot_results(fits, **kwargs)
-
-
-

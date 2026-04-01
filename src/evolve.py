@@ -7,7 +7,7 @@ from multiprocessing import Pool, cpu_count
 
 import numpy as np
 
-from src.utils.save import save_kwargs, save_run
+from src.utils.save import save_kwargs, save_run, save_run_verbose
 
 #
 # Initialization
@@ -118,6 +118,9 @@ def simulate_run(**kwargs):
     run_pops = np.empty(shape, dtype=object)
     run_fits = np.empty(shape)
 
+    run_extra_data_1 = np.empty(shape)
+    run_extra_data_2 = np.empty(shape)
+
     pop = init_pop(**kwargs)
     run_pops[0] = pop
 
@@ -140,11 +143,17 @@ def simulate_run(**kwargs):
         # all_pops[generation + 1] = [n.to_lists() for n in pop]
         run_pops[generation + 1] = pop
         run_fits[generation] = fit
+        if(kwargs['extra_data']):
+            run_extra_data_1[generation] = kwargs['extra_data_1'](pop, **kwargs)
+            run_extra_data_2[generation] = kwargs['extra_data_2'](pop, **kwargs)
 
     # Final fitness values
     run_fits[-1] = kwargs['fitness_func'](pop, gen=generation, is_final=True, **kwargs)
+    if(kwargs['extra_data']):
+            run_extra_data_1[-1] = kwargs['extra_data_1'](pop, **kwargs)
+            run_extra_data_2[-1] = kwargs['extra_data_2'](pop, **kwargs)
 
-    return run_pops, run_fits
+    return run_pops, run_fits, run_extra_data_1, run_extra_data_2
 
 
 def _simulate_and_save_test_run(test_num, run_num, test_kwargs, base_kwargs):
@@ -183,8 +192,9 @@ def _simulate_and_save_test_run(test_num, run_num, test_kwargs, base_kwargs):
         kwargs['mutate_funcs'].append([None, prob_noop])
 
     # Run simulation and save
-    pops, fits = simulate_run(test_name=test_name, **kwargs)
-    save_run(test_path, pops, fits, **kwargs)
+    pops, fits, extra_1, extra_2 = simulate_run(test_name=test_name, **kwargs)
+    if(kwargs['extra_data']): save_run_verbose(test_path, pops, fits, extra_1, extra_2, **kwargs)
+    else: save_run(test_path, pops, fits, **kwargs)
 
 
 def simulate_tests(num_runs, test_kwargs, **kwargs):

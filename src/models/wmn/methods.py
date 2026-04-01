@@ -154,6 +154,59 @@ def cov_con_entropy_fitness(pop, **kwargs):
     return fits
 
 
+def lexicase_fitness(pop, **kwargs):
+    """Calculate the fitness for each organism based on its lexicase selection ranking"""
+
+    # loop: 
+    fits = np.full(len(pop), -1)
+    cov_vals = np.empty((len(pop),2))
+    con_vals = np.empty((len(pop),2))
+
+    for k,routers in enumerate(pop):
+        cov_vals[k][1] = sum(np.array(coverage_arr(routers, **kwargs)) != -1)
+        con_vals[k][1] = num_connected(router_adj_mat(routers, **kwargs))
+        cov_vals[k][0] = con_vals[k][0] = k
+    
+    con_vals = con_vals[con_vals[:, 1].argsort()]
+    cov_vals = cov_vals[cov_vals[:, 1].argsort()]
+
+    cur_fitness = len(pop)
+    con_i = cov_i = len(pop) - 1
+    while(con_i >= 0 and cov_i >= 0):
+        # pick a random test case to go first:
+        if (np.random.rand() < 0.5): # coverage first
+            best = cov_vals[cov_i][1]
+            while(cov_i >= 0 and cov_vals[cov_i][1] >= best - kwargs['epsilon']):
+                if(fits[int(cov_vals[cov_i][0])] == -1): 
+                    fits[int(cov_vals[cov_i][0])] = cur_fitness
+                cov_i -= 1
+            
+        else: # connectivity first
+            best = con_vals[con_i][1]
+            while(con_i >= 0 and con_vals[con_i][1] >= best - kwargs['epsilon']):
+                if(fits[int(con_vals[con_i][0])] == -1): 
+                    fits[int(con_vals[con_i][0])] = cur_fitness
+                con_i -= 1
+        cur_fitness -= 1
+    
+    fits = np.array(fits)
+    return fits
+    
+
+# 
+# Extra data collection
+#
+def get_con_vals(pop, **kwargs):
+    con_vals = np.empty(len(pop))
+    for k,routers in enumerate(pop):
+        con_vals[k] = num_connected(router_adj_mat(routers, **kwargs))
+    return con_vals
+
+def get_cov_vals(pop, **kwargs):
+    cov_vals = np.empty(len(pop))
+    for k,routers in enumerate(pop):
+        cov_vals[k] = sum(np.array(coverage_arr(routers, **kwargs)) != -1)
+    return cov_vals
 
 
 #
