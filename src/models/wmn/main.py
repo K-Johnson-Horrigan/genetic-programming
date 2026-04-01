@@ -1,3 +1,8 @@
+import os
+import sys
+script_directory = os.path.dirname(os.path.abspath(sys.argv[0]))
+sys.path.append(script_directory[:-14])
+
 from src.evolve import simulate_tests
 from src.models.wmn import *
 from src.models.wmn.plot import plot_results
@@ -7,10 +12,10 @@ kwargs = {
     'name': 'example_8',  # Name of folder to contain all results
     'seed': None,
     'verbose': True,
-    'parallelize': True,
-    'saves_path': '../../../saves/placement/',  # Save path relative to this file
+    'parallelize': False,
+    'saves_path': 'saves/placement/',  # Save path relative to this file
     ## Size ##
-    'num_runs': 10,
+    'num_runs': 2,
     'num_gens': 50,
     'pop_size': 16,
     'num_routers': 16,
