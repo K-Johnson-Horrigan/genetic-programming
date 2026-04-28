@@ -161,10 +161,12 @@ def lexicase_fitness(pop, **kwargs):
     fits = np.full(len(pop), -1)
     cov_vals = np.empty((len(pop),2))
     con_vals = np.empty((len(pop),2))
+    obj_1 = get_con_vals(pop, **kwargs)
+    obj_2 = get_cov_vals(pop, **kwargs)
 
     for k,routers in enumerate(pop):
-        cov_vals[k][1] = sum(np.array(coverage_arr(routers, **kwargs)) != -1)
-        con_vals[k][1] = num_connected(router_adj_mat(routers, **kwargs))
+        cov_vals[k][1] = obj_2[k]
+        con_vals[k][1] = obj_1[k]
         cov_vals[k][0] = con_vals[k][0] = k
     
     con_vals = con_vals[con_vals[:, 1].argsort()]
@@ -192,20 +194,70 @@ def lexicase_fitness(pop, **kwargs):
     fits = np.array(fits)
     return fits
     
+def multi_obj_nsga_esque(pop, **kwargs): # not perfect nsga
+    """Calculate the fitness for each organism based on its pareto front rank"""
+
+    obj_1 = get_con_vals(pop, **kwargs)
+    obj_2 = get_cov_vals(pop, **kwargs)
+    ranks = np.empty(len(pop))
+   
+    fronts = [[]]
+    dominated_sets = []
+    domination_counters = np.empty(len(pop))
+
+    for i_p in range(len(pop)):
+        ds = []
+        domination_counter = 0
+
+        for i_q in range(len(pop)):
+            if((obj_1[i_p] >= obj_1[i_q] and obj_2[i_p] > obj_2[i_q]) or \
+               (obj_1[i_p] > obj_1[i_q] and obj_2[i_p] >= obj_2[i_q])): # minimize
+               ds.append(i_q) # p dominates q
+            elif((obj_1[i_q] >= obj_1[i_p] and obj_2[i_q] > obj_2[i_p]) or \
+                 (obj_1[i_q] > obj_1[i_p] and obj_2[i_q] >= obj_2[i_p])):
+                domination_counter += 1 # q dominates p
+
+        if domination_counter == 0: # p is undominated
+            ranks[i_p] = 1 # p is a 1-st rank solution
+            fronts[0].append(i_p)
+
+        dominated_sets.append(ds)
+        domination_counters[i_p] = domination_counter
+
+    i = 0
+    while fronts[i]:
+        Q = []
+        for i_p in fronts[i]:
+            for i_q in dominated_sets[i_p]:
+                domination_counters[i_q] -= 1
+                if(domination_counters[i_q] == 0):
+                    ranks[i_q] = i + 2
+                    if i_q not in Q: Q.append(i_q)
+        i += 1
+        if(i == len(fronts)):
+            fronts.append(Q)
+    ranks = np.abs(ranks - (len(pop) + 1))
+    return np.array(ranks)
 
 # 
 # Extra data collection
 #
 def get_con_vals(pop, **kwargs):
+    m = kwargs['num_routers']
     con_vals = np.empty(len(pop))
     for k,routers in enumerate(pop):
-        con_vals[k] = num_connected(router_adj_mat(routers, **kwargs))
+        n_con = num_connected(router_adj_mat(routers, **kwargs))
+        n_con_norm = (m-n_con)/(m-1)
+        con_vals[k] = n_con_norm
     return con_vals
 
 def get_cov_vals(pop, **kwargs):
+    n = len(kwargs['clients'])
     cov_vals = np.empty(len(pop))
     for k,routers in enumerate(pop):
-        cov_vals[k] = sum(np.array(coverage_arr(routers, **kwargs)) != -1)
+        n_cov = sum(np.array(coverage_arr(routers, **kwargs)) != -1)
+        n_cov_norm = n_cov/n
+        cov_vals[k] = n_cov_norm
     return cov_vals
 
 

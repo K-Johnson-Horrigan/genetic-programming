@@ -1,38 +1,7 @@
-# Framework for Artificial Evolution
 
-## ℹ️ Overview
+This fork contains edits made for the final CS812 class project. To run experiments, from the main directory run: python3 src/models/wmn/main.py
 
-The Framework for Artificial Evolution (FAE) is a basic implementation of evolutionary computation and genetic programming used to run experiments under various models.
+Outputs will be saved to the saves/ folder.
 
-## ⚙️ Standard Evolution Methods
+To run particular experiments, modify the main.py file. 
 
-Methods contained withing the evolve.py are standard methods used for evolution are usually operate independent of the topic of evolution.
-
-## 📚 Models
-
-Individual modules used to implement new forms of evolution. Broken into several files:
-
-- main: File used to run experiments
-- methods: General evolution methods such as mutation and recombination
-- model: Optional class based implementation used to represent the 
-- plot: Specific methods of graphic results or models
-
-Models can be added and removed without impacting any other part of the FAE.
-
-### Self-Modifying Linear Genetic Programming (smlgp)
-Advanced model using memory banks and a more structured assembly like language to evolve systems capable of self modification.
-
-### Directed Acyclic Graph Genetic Programming (daggp)
-A more classic methods of GP which is also used to evolve standard trees.
-
-### Turing Machine Genetic Programming (tmgp)
-A simple model used to evolve multi dimensional Turing Machines.
-
-### Channel Assignment Problem (cap)
-Basic methods used to find solutions to the channel assignment problem.
-
-### Router Placement Problem (wmn)
-Basic methods used to find solutions to the placement of wireless mesh networks.
-
-
-[//]: # (## 💾 Saving)

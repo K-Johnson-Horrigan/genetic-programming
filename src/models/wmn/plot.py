@@ -230,6 +230,9 @@ def plot_extra_1(extra_1, **kwargs):
         y = np.mean(np.max(extra_1[test], axis=2), axis=0)
         ax.set_ylabel('Mean max connectivity')
         plt.plot(x, y, label=kwargs['test_kwargs'][test + 1][0])
+        # Error bands
+        y_std = np.std(np.max(extra_1[test], axis=2), axis=0)
+        ax.fill_between(x, y - y_std, y + y_std, alpha=0.2)
     ax.set_xlabel('Generation')
     plt.legend(title=kwargs['test_kwargs'][0][0])
     if save:
@@ -248,6 +251,9 @@ def plot_extra_2(extra_2, **kwargs):
         y = np.mean(np.max(extra_2[test], axis=2), axis=0)
         ax.set_ylabel('Mean max coverage')
         plt.plot(x, y, label=kwargs['test_kwargs'][test + 1][0])
+        # Error bands
+        y_std = np.std(np.max(extra_2[test], axis=2), axis=0)
+        ax.fill_between(x, y - y_std, y + y_std, alpha=0.2)
     ax.set_xlabel('Generation')
     plt.legend(title=kwargs['test_kwargs'][0][0])
     if save:

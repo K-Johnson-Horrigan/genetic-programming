@@ -29,7 +29,7 @@ def save_kwargs(**kwargs):
             return f'{FUNC_PREFIX}.{obj.__name__}'
         else:
             return obj
-    kwargs_path = f'{kwargs['saves_path']}{kwargs['name']}/'
+    kwargs_path = f'{kwargs["saves_path"]}{kwargs["name"]}/'
     os.makedirs(kwargs_path, exist_ok=True)
     print(f'Saving kwargs to {kwargs_path}kwargs.json')
     with open(kwargs_path + 'kwargs.json', 'w') as f:
@@ -87,7 +87,7 @@ def load_runs(**kwargs):
     for test in tests:
         pops.append([])
         fits.append([])
-        test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test}/*/'
+        test_path = f'{kwargs["saves_path"]}{kwargs["name"]}/data/{test}/*/'
         for run_file_name in glob.glob(test_path):
             print(f'Loading run from {run_file_name}')
             pops[-1].append(np.load(run_file_name+'pops.npy', allow_pickle=True))
@@ -104,7 +104,7 @@ def load_fits(**kwargs):
     test_names = [test[0] for test in kwargs['test_kwargs'][1:]]
     for test_name in test_names:
         fits.append([])
-        test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/'
+        test_path = f'{kwargs["saves_path"]}{kwargs["name"]}/data/{test_name}/*/'
         for run_file_name in sorted(glob.glob(test_path)):
             print(f'Loading fitness from {run_file_name}')
             fits[-1].append(np.load(run_file_name+'fits.npy'))
@@ -117,7 +117,7 @@ def load_extra_1(**kwargs):
     test_names = [test[0] for test in kwargs['test_kwargs'][1:]]
     for test_name in test_names:
         fits.append([])
-        test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/'
+        test_path = f'{kwargs["saves_path"]}{kwargs["name"]}/data/{test_name}/*/'
         for run_file_name in sorted(glob.glob(test_path)):
             print(f'Loading extra 1 from {run_file_name}')
             fits[-1].append(np.load(run_file_name+'extra_1.npy'))
@@ -130,7 +130,7 @@ def load_extra_2(**kwargs):
     test_names = [test[0] for test in kwargs['test_kwargs'][1:]]
     for test_name in test_names:
         fits.append([])
-        test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/'
+        test_path = f'{kwargs["saves_path"]}{kwargs["name"]}/data/{test_name}/*/'
         for run_file_name in sorted(glob.glob(test_path)):
             print(f'Loading extra 2 from {run_file_name}')
             fits[-1].append(np.load(run_file_name+'extra_2.npy'))
@@ -143,7 +143,7 @@ def load_pops(**kwargs):
     test_names = [test[0] for test in kwargs['test_kwargs'][1:]]
     for test_name in test_names:
         pops.append([])
-        test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/'
+        test_path = f'{kwargs["saves_path"]}{kwargs["name"]}/data/{test_name}/*/'
         for run_file_name in glob.glob(test_path):
             print(f'Loading run from {run_file_name}')
             pops[-1].append(np.load(run_file_name+'pops.npy', allow_pickle=True))
@@ -155,7 +155,7 @@ def load_pops(**kwargs):
 def load_pop(test, run, **kwargs):
     """Returns a 4D array of all individuals and fitness values"""
     test_name = kwargs['test_kwargs'][1:][test][0]
-    test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/'
+    test_path = f'{kwargs["saves_path"]}{kwargs["name"]}/data/{test_name}/*/'
     run_file_name = sorted(glob.glob(test_path))[run]
     print(f'Loading population from {run_file_name}')
     pop = np.load(run_file_name+'pops.npy', allow_pickle=True)
@@ -165,7 +165,7 @@ def load_pop(test, run, **kwargs):
 def load_seed(test, run, **kwargs):
     """Returns the seed used for a run given the test name and the index of the run"""
     test_name = kwargs['test_kwargs'][1:][test][0]
-    test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/'
+    test_path = f'{kwargs["saves_path"]}{kwargs["name"]}/data/{test_name}/*/'
     run_file_name = sorted(glob.glob(test_path))[run]
     run_seed = run_file_name.split('\\')[-2]
     return run_seed
@@ -174,7 +174,7 @@ def load_seed(test, run, **kwargs):
 def load_seeds(test, **kwargs):
     """Returns the seed used for a run given the test name and the index of the run"""
     test_name = kwargs['test_kwargs'][1:][test][0]
-    test_path = f'{kwargs['saves_path']}{kwargs['name']}/data/{test_name}/*/'
+    test_path = f'{kwargs["saves_path"]}{kwargs["name"]}/data/{test_name}/*/'
     run_file_names = sorted(glob.glob(test_path))
     run_seeds = [int(run_file_name.split('\\')[-2]) for run_file_name in run_file_names]
     return run_seeds
