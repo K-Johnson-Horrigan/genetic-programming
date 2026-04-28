@@ -1,3 +1,5 @@
+# NOTE: CSE812 project is NOT on this branch, it is on the routers branch!!
+
 # genetic-programming
 
 This fork contains edits made for the final CS824 class project. To run experiments, from the main directory run:
