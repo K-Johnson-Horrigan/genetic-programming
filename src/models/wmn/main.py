@@ -13,7 +13,7 @@ kwargs = {
     'seed': None,
     'verbose': True,
     'parallelize': False,
-    'saves_path': 'saves/placement/',  # Save path relative to this file
+    'saves_path': 'saves/',  # Save path relative to this file
     ## Size ##
     'num_runs': 2,
     'num_gens': 50,
